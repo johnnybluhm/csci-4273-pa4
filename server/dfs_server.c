@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
     //creates and binds socket
     listenfd = open_listenfd(port);
-    
+
     //initialize thread_object
     struct Thread_object thread_object;
     thread_object.file_lock = file_lock;
@@ -73,8 +73,12 @@ void * thread(void * vargp)
     struct Thread_object *thread_object;
     thread_object = (struct Thread_object*)vargp;
     int connfd = (int)thread_object->connfdp;
+
+    char * message = malloc(MAXBUF);
+    message = "hello world";
     pthread_detach(pthread_self());     
-    
+    printf("Connection received\n");
+    write(connfd, message, strlen(message));
 
   }//thread  
 

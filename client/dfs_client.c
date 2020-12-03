@@ -17,45 +17,44 @@
 
 void *thread(void *vargp);
 char* itoa(int value, char* result, int base);
-int build_server_addr(struct sockaddr_in* serv_addr, char * ip_add);
+int build_server_address(struct sockaddr_in* serv_addr, char * ip_add);
 
 
 
 int main(int argc, char **argv) 
 {
-    int listenfd, timeout, port, clientlen=sizeof(struct sockaddr_in);
-    struct sockaddr_in clientaddr;
+    int port,sock,check_addr, clientlen=sizeof(struct sockaddr_in);
+    struct sockaddr_in server_address;
     pthread_t tid; 
-    pthread_mutex_t* file_lock;
-    file_lock = malloc(sizeof(pthread_mutex_t));
-    //initialize file_lock
-    if (pthread_mutex_init(file_lock, NULL) != 0) { 
-        printf("\n mutex init has failed\n"); 
-        return 1; 
-    } 
 
     if (argc != 2) {
 	fprintf(stderr, "usage: %s <dfc.conf>\n", argv[0]);
 	exit(0);
     }
-    time_t start_time;
-    start_time = time(NULL);
-    port = atoi(argv[1]);
-    timeout = atoi(argv[2]);
 
-    listenfd = open_listenfd(port);
+    check_addr = build_server_address(&server_address, "127.0.0.1");
 
-    //initialize thread_object
-    struct Thread_object thread_object;
-    thread_object.file_lock = file_lock;
-    thread_object.timeout = &timeout;
-    thread_object.start_time = start_time;
+    if(check_addr < 0){
+        printf("Error building address\n");
+        printf("Exiting\n");
+        return -1;
+    }
+    else{
 
-    printf("Listening on port %d\n", port);
-    while (1) {    
-        thread_object.connfdp = (intptr_t*)accept(listenfd, (struct sockaddr*)&clientaddr, &clientlen);
-        pthread_create(&tid, NULL, thread, (void *)&thread_object);
-    }//while(1)
+            if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+            { 
+                printf("\n Socket creation error \n"); 
+                return -1; 
+            } 
+
+            if(connect(sock, (struct sockaddr *)&server_address, sizeof(struct sockaddr_in)) < 0) 
+            { 
+                printf("\nConnection Failed\n"); 
+                printf("Exiting\n");
+                return -1; 
+            }
+
+    }//else
 }//main
 
 /* thread subroutine */
@@ -63,3 +62,17 @@ void * thread(void * vargp)
 {  
 
   }//thread  
+
+int build_server_address(struct sockaddr_in* serv_addr, char * ip_add){
+    printf("Building address\n");
+    serv_addr->sin_family = AF_INET; //ipV4
+    serv_addr->sin_port = htons(8000);
+
+    //https://www.gta.ufrj.br/ensino/eel878/sockets/sockaddr_inman.html
+    //converts IP to correct format
+    if(inet_aton(ip_add, (struct in_addr* )&serv_addr->sin_addr.s_addr) ==0){
+        return -1;
+    }
+    printf("Address built successfully\n");
+    return 1;
+}

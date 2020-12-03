@@ -75,10 +75,12 @@ void * thread(void * vargp)
     int connfd = (int)thread_object->connfdp;
 
     char * message = malloc(MAXBUF);
-    message = "hello world";
+    
     pthread_detach(pthread_self());     
     printf("Connection received\n");
-    write(connfd, message, strlen(message));
+    read(connfd, message, MAXBUF);
+
+    printf("read %s from client \n",message);
 
   }//thread  
 

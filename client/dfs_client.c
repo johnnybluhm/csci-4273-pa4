@@ -37,22 +37,59 @@ int main(int argc, char **argv)
     FILE* file_pointer;
     config_file_to_strings(file_pointer,conf_string, config_array);
 
-    printf("server 1 is %s\n",config_array[4]);
     //can build all different server addresses here
+      
+    //build server 1
     server_to_ip(config_array[0], ip_port_array);
     port = atoi(ip_port_array[1]);
-
-    printf("ip is %s\nport is %d\n",ip_port_array[0],port);
     check_addr = build_server_address(&server1_address, ip_port_array[0], port);
-
     if(check_addr < 0){
         printf("Error building address 1\n");
         return -1;
     }
-    
 
+    //build server 2
+    server_to_ip(config_array[1], ip_port_array);
+    port = atoi(ip_port_array[1]);
+    check_addr = build_server_address(&server2_address, ip_port_array[0], port);
+    if(check_addr < 0){
+        printf("Error building address 2\n");
+        return -1;
+    }
+
+    //build server 3
+    server_to_ip(config_array[2], ip_port_array);
+    port = atoi(ip_port_array[1]);
+    check_addr = build_server_address(&server3_address, ip_port_array[0], port);
+    if(check_addr < 0){
+        printf("Error building address 3\n");
+        return -1;
+    }
+
+    //build server 4
+    server_to_ip(config_array[3], ip_port_array);
+    port = atoi(ip_port_array[1]);
+    check_addr = build_server_address(&server4_address, ip_port_array[0], port);
+    if(check_addr < 0){
+        printf("Error building address 4\n");
+        return -1;
+    }    
+
+
+    char* username;
+    char* password;
+    strtok(config_array[4], " ");
+    username = strtok(NULL, " ");
+    strtok(config_array[5], " ");
+    password = strtok(NULL, " ");
+    printf("user name is %s\n psswd is %s",username, password );
+
+    //connect to all serves
     server1 = connect_to_server(server1_address);
     server2 = connect_to_server(server2_address);
+    server3 = connect_to_server(server3_address);
+    server4 = connect_to_server(server4_address);
+
     //connected from this point
     
     //list commands

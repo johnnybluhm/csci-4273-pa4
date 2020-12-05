@@ -75,14 +75,13 @@ int main(int argc, char **argv)
         return -1;
     }    
 
-
+    //get username and password
     char* username;
     char* password;
     strtok(config_array[4], " ");
     username = strtok(NULL, " ");
     strtok(config_array[5], " ");
     password = strtok(NULL, " ");
-    printf("user name is %s\n psswd is %s",username, password );
 
     //connect to all serves
     server1 = connect_to_server(server1_address);

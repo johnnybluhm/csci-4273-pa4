@@ -92,21 +92,48 @@ int main(int argc, char **argv)
     //connected from this point
     
     //list commands
-    printf("Select a command to send to server\n");
-    printf("1:list\n");
-    printf("2:get\n");
-    printf("3:put\n");
-    int user_selection;
-    scanf("%d", &user_selection);
-    char * message = "server 1 hello";
-    char * message2 = "server 2 hello";
-    printf("you selected %d\n",user_selection );
+    while(1){
 
-    printf("sending to server\n");
 
-    write(server1, message,strlen(message));
-    write(server2, message2,strlen(message));
+        printf("Select a command to send to server\n");
+        printf("1:list\n");
+        printf("2:get\n");
+        printf("3:put\n");
+        printf("99: exit\n");
+        int user_selection;
+        scanf("%d", &user_selection);
+        if(user_selection == 99){
+            printf("Goodbye!\n");
+            return 1;
+        }//exit
+        //handle list
+        else if(user_selection == 1){
 
+        }
+        //handle get
+        else if(user_selection == 2){
+
+        }
+        //handle put
+        else if(user_selection == 3){
+
+        }
+        else{
+            printf("Please enter a valid command\n\n");
+        }
+
+        /*
+        char * message = "server 1 hello";
+        char * message2 = "server 2 hello";
+        printf("you selected %d\n",user_selection );
+
+        printf("sending to server\n");
+
+        write(server1, message,strlen(message));
+        write(server2, message2,strlen(message));
+        */
+
+    }//while(1)
     
 }//main 
 
@@ -120,7 +147,6 @@ int build_server_address(struct sockaddr_in* serv_addr, char * ip_add, int port_
     if(inet_aton(ip_add, (struct in_addr* )&serv_addr->sin_addr.s_addr) ==0){
         return -1;
     }
-    printf("Address built successfully\n");
     return 1;
 }
 
@@ -135,7 +161,7 @@ int connect_to_server(struct sockaddr_in server_address)
 
     if(connect(server_num, (struct sockaddr *)&server_address, sizeof(struct sockaddr_in)) < 0) 
     { 
-        printf("\nConnection Failed\n"); 
+        printf("Connection Failed\n"); 
         return -1; 
     }
 

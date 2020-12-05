@@ -21,6 +21,9 @@ int build_server_address(struct sockaddr_in* serv_addr, char * ip_add, int port_
 int connect_to_server(struct sockaddr_in server_address);
 void config_file_to_strings(FILE * file_pointer, char * string, char * strings[]);
 void server_to_ip(char * string, char * ip_port_array[]);
+char* get_user(char * conf_string);
+char* get_password(char * conf_string);
+
 
 int main(int argc, char **argv) 
 {
@@ -78,12 +81,10 @@ int main(int argc, char **argv)
     //get username and password
     char* username;
     char* password;
-    strtok(config_array[4], " ");
-    username = strtok(NULL, " ");
-    strtok(config_array[5], " ");
-    password = strtok(NULL, " ");
+    username = get_user(config_array[4]);
+    password = get_user(config_array[5]);
 
-    //connect to all serves
+    //connect to all servers
     server1 = connect_to_server(server1_address);
     server2 = connect_to_server(server2_address);
     server3 = connect_to_server(server3_address);
@@ -94,28 +95,67 @@ int main(int argc, char **argv)
     //list commands
     while(1){
 
-
         printf("Select a command to send to server\n");
         printf("1:list\n");
         printf("2:get\n");
         printf("3:put\n");
         printf("99: exit\n");
         int user_selection;
+        char a;
         scanf("%d", &user_selection);
+        //a = getchar();
+        //exit conditional
         if(user_selection == 99){
             printf("Goodbye!\n");
             return 1;
         }//exit
+
         //handle list
         else if(user_selection == 1){
 
+            printf("Server's response:\n\n");
+
         }
+
         //handle get
         else if(user_selection == 2){
 
+            char file_name[MAXBUF];
+            char buf[MAXBUF];
+            printf("Enter filename\n");
+            scanf("%s",file_name);
+            printf("file name is%s\n",file_name );
+
+            //format of "<username> <password> get <filename>"
+
+            //build request to server
+            //strcat(initial_request, password);
+            //strcat(initial_request, " ");
+            //strcat(initial_request, "get");
+            //strcat(initial_request, " ");
+            //strcat(initial_request, file_name);
+            
+            write(server1, username, strlen(username));
+            
+            //write(server1, password, strlen(password));
+            //write(server1, "get", strlen("get"));
+            //write(server1, file_name, strlen(file_name));
+
+            printf("Requesting from server\n");
+
+            //read(server1, buf, MAXBUF);
+
+            printf("Server response %s\n", buf);
+
         }
+
         //handle put
         else if(user_selection == 3){
+
+            char  file_name[MAXBUF];
+            printf("Enter filename\n");
+            scanf("%s",file_name);
+            printf("Requesting from server\n");
 
         }
         else{
@@ -137,8 +177,21 @@ int main(int argc, char **argv)
     
 }//main 
 
+char* get_user(char * conf_string){
+
+    strtok(conf_string, " ");
+    return strtok(NULL, " ");
+
+}
+
+char* get_password(char * conf_string){
+
+    strtok(conf_string, " ");
+    return strtok(NULL, " ");
+}
+
 int build_server_address(struct sockaddr_in* serv_addr, char * ip_add, int port_num){
-    printf("Building address\n");
+
     serv_addr->sin_family = AF_INET; //ipV4
     serv_addr->sin_port = htons(port_num);
 
@@ -153,11 +206,18 @@ int build_server_address(struct sockaddr_in* serv_addr, char * ip_add, int port_
 int connect_to_server(struct sockaddr_in server_address)
 {
     int server_num;
+
+    struct timeval sock_timeout;
+    sock_timeout.tv_sec = 1;
+    sock_timeout.tv_usec = 0;
+
     if((server_num = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
     { 
         printf("\n Socket creation error \n"); 
         return -1; 
     } 
+   /* setsockopt (server_num, IPPROTO_TCP, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+    setsockopt (server_num, IPPROTO_TCP, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));*/
 
     if(connect(server_num, (struct sockaddr *)&server_address, sizeof(struct sockaddr_in)) < 0) 
     { 

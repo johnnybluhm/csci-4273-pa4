@@ -74,13 +74,70 @@ void * thread(void * vargp)
     thread_object = (struct Thread_object*)vargp;
     int connfd = (int)thread_object->connfdp;
 
-    char * message = malloc(MAXBUF);
+    //adding 1 sec timeout
+    /*struct timeval sock_timeout;
+    sock_timeout.tv_sec = 0;
+    sock_timeout.tv_usec = 100;
+    setsockopt (connfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+    setsockopt (connfd, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));*/
+    char * entire_request = malloc(MAXBUF);
+    char * username = malloc(MAXBUF);
+    char * password = malloc(MAXBUF);
+    char * filename = malloc(MAXBUF);
+    char * initial_client_request = malloc(MAXBUF);
     
     pthread_detach(pthread_self());     
     printf("Connection received\n");
-    read(connfd, message, MAXBUF);
 
-    printf("read %s from client \n",message);
+    int bytes_read;
+    char * response = "got it";
+    /*bytes_read = read(connfd, username , MAXBUF);
+    if(bytes_read <1){
+        printf("Error reading username from client\n");
+        return NULL;
+    }
+    write(connfd, response, strlen(response));
+    printf("user is %s\n",username );
+    bytes_read = read(connfd, password , MAXBUF);
+    if(bytes_read <1){
+        printf("Error reading password from client\n");
+        return NULL;
+    }
+    write(connfd, response, strlen(response));
+    bytes_read = read(connfd, initial_client_request , MAXBUF);
+    if(bytes_read <1){
+        printf("Error reading request_type from client\n");
+        return NULL;
+    }
+    bytes_read = read(connfd, filename , MAXBUF);
+    if(bytes_read <1){
+        printf("Error reading filename from client\n");
+        return NULL;
+    }*/
+    printf("Reading from client\n");
+    while(1){
+
+        memset(entire_request, 0, MAXBUF);
+        bytes_read = read(connfd, entire_request , MAXBUF);
+        printf("%d\n",bytes_read );
+        printf("%s\n",entire_request );
+
+        write(connfd, response, strlen(response));
+        if(bytes_read == 0){
+            printf("Breaking loop\n");
+            break;
+        }
+    }
+
+    //write(connfd, response, strlen(response));
+
+    printf("%s\n",entire_request );
+    /*printf("pass is %s\n",password );
+    printf("req is %s\n",initial_client_request );
+    printf("filename is %s\n",filename );*/
+
+
+    //need to authenticate user
 
   }//thread  
 

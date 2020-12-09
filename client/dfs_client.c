@@ -11,6 +11,8 @@
 #include <time.h>
 #include <sys/types.h>
 
+
+#include <stdarg.h>
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
 #define LISTENQ  1024  /* second argument to listen() */
@@ -23,14 +25,14 @@ void config_file_to_strings(FILE * file_pointer, char * string, char * strings[]
 void server_to_ip(char * string, char * ip_port_array[]);
 char* get_user(char * conf_string);
 char* get_password(char * conf_string);
-
+char* concat(int count, ...);
 
 int main(int argc, char **argv) 
 {
     int port,server1,server2,server3,server4,  check_addr, clientlen=sizeof(struct sockaddr_in);
     struct sockaddr_in server1_address, server2_address, server3_address,server4_address;
     char conf_string[MAXBUF];
-    char * config_array[5];
+    char * config_array[6];
     char * ip_port_array[2];
     if (argc != 2) {
 	fprintf(stderr, "usage: %s <dfc.conf>\n", argv[0]);
@@ -81,9 +83,18 @@ int main(int argc, char **argv)
     //get username and password
     char* username;
     char* password;
-    username = get_user(config_array[4]);
-    password = get_user(config_array[5]);
-
+    username = strtok(config_array[4], " ");
+    username = strtok(NULL, " ");
+    //username = get_user(config_array[4]);
+    //password = get_user(config_array[5]);
+    password = strtok(config_array[5], " ");
+    password = strtok(NULL, " ");
+    username[strlen(username)] = '\0';
+    password[strlen(password)] = '\0';
+    char pswd[MAXBUF];
+    char u_name[MAXBUF];
+    strcpy(u_name, username);
+    printf("username is%s\n",username );
     //connect to all servers
     server1 = connect_to_server(server1_address);
     server2 = connect_to_server(server2_address);
@@ -120,21 +131,24 @@ int main(int argc, char **argv)
         //handle get
         else if(user_selection == 2){
 
-            char file_name[MAXBUF];
+            char filename[MAXBUF];
+            char initial_request[MAXBUF];
             char buf[MAXBUF];
             printf("Enter filename\n");
-            scanf("%s",file_name);
-            printf("file name is%s\n",file_name );
-
+            scanf("%s",filename);
+            printf("file name is:\n%s\n",filename );
+            printf("%s\n",initial_request );
             //format of "<username> <password> get <filename>"
-
+            //initial_request = concat(5, "test", " ", username, " get ",filename );
             //build request to server
-            //strcat(initial_request, password);
+            strcpy(initial_request, username);
+            printf("%s\n",initial_request );
+            strcat(initial_request, filename);
             //strcat(initial_request, " ");
             //strcat(initial_request, "get");
             //strcat(initial_request, " ");
             //strcat(initial_request, file_name);
-            
+            printf("Request is:\n%s\n",initial_request );
             write(server1, username, strlen(username));
             
             //write(server1, password, strlen(password));
@@ -143,7 +157,7 @@ int main(int argc, char **argv)
 
             printf("Requesting from server\n");
 
-            //read(server1, buf, MAXBUF);
+            read(server1, buf, MAXBUF);
 
             printf("Server response %s\n", buf);
 
@@ -152,9 +166,9 @@ int main(int argc, char **argv)
         //handle put
         else if(user_selection == 3){
 
-            char  file_name[MAXBUF];
+            char  filename[MAXBUF];
             printf("Enter filename\n");
-            scanf("%s",file_name);
+            scanf("%s",filename);
             printf("Requesting from server\n");
 
         }
@@ -177,6 +191,35 @@ int main(int argc, char **argv)
     
 }//main 
 
+char* concat(int count, ...)
+{
+    va_list ap;
+    int i;
+
+    // Find required length to store merged string
+    int len = 1; // room for NULL
+    va_start(ap, count);
+    for(i=0 ; i<count ; i++)
+        len += strlen(va_arg(ap, char*));
+    va_end(ap);
+
+    // Allocate memory to concat strings
+    char *merged = calloc(sizeof(char),len);
+    int null_pos = 0;
+
+    // Actually concatenate strings
+    va_start(ap, count);
+    for(i=0 ; i<count ; i++)
+    {
+        char *s = va_arg(ap, char*);
+        strcpy(merged+null_pos, s);
+        null_pos += strlen(s);
+    }
+    va_end(ap);
+
+    return merged;
+}
+
 char* get_user(char * conf_string){
 
     strtok(conf_string, " ");
@@ -187,6 +230,7 @@ char* get_user(char * conf_string){
 char* get_password(char * conf_string){
 
     strtok(conf_string, " ");
+
     return strtok(NULL, " ");
 }
 
@@ -216,14 +260,17 @@ int connect_to_server(struct sockaddr_in server_address)
         printf("\n Socket creation error \n"); 
         return -1; 
     } 
-   /* setsockopt (server_num, IPPROTO_TCP, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
-    setsockopt (server_num, IPPROTO_TCP, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));*/
+    setsockopt (server_num, IPPROTO_TCP, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+    setsockopt (server_num, IPPROTO_TCP, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
 
     if(connect(server_num, (struct sockaddr *)&server_address, sizeof(struct sockaddr_in)) < 0) 
     { 
         printf("Connection Failed\n"); 
         return -1; 
     }
+
+    setsockopt (server_num, IPPROTO_TCP, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+    setsockopt (server_num, IPPROTO_TCP, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
 
     return server_num;
 

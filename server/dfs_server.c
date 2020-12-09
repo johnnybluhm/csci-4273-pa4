@@ -16,7 +16,7 @@
 #define LISTENQ  1024  /* second argument to listen() */
 
 int open_listenfd(int port);
-void *thread(void *vargp);
+void * handle_connection(void * vargp);
 char* itoa(int value, char* result, int base);
 int dnslookup(const char* hostname, char* firstIPstr, int maxSize);
 void * test(void * vargp);
@@ -30,7 +30,7 @@ char* ultostr(unsigned long value, char *ptr, int base);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
-    int* connfdp;
+    int* client_socket;
 };
 
 int main(int argc, char **argv) 
@@ -59,75 +59,54 @@ int main(int argc, char **argv)
     //initialize thread_object
     struct Thread_object thread_object;
     thread_object.file_lock = file_lock;
+    
     printf("Listening on port %d\n", port);
     while (1) {    
-        thread_object.connfdp = (intptr_t*)accept(listenfd, (struct sockaddr*)&clientaddr, &clientlen);
-        pthread_create(&tid, NULL, thread, (void *)&thread_object);
+        thread_object.client_socket = malloc(sizeof(int));
+        thread_object.client_socket = (intptr_t*)accept(listenfd, (struct sockaddr*)&clientaddr, &clientlen);
+        pthread_create(&tid, NULL, handle_connection, (void *)&thread_object);
+        printf("Connection received\n");
     }//while(1)
 }//main
 
 /* thread subroutine */
-void * thread(void * vargp) 
+void * handle_connection(void * vargp) 
 {  
     //pointer to struct
     struct Thread_object *thread_object;
     thread_object = (struct Thread_object*)vargp;
-    int connfd = (int)thread_object->connfdp;
+    int client_socket = (int)thread_object->client_socket;
 
     //adding 1 sec timeout
-    /*struct timeval sock_timeout;
-    sock_timeout.tv_sec = 0;
-    sock_timeout.tv_usec = 100;
-    setsockopt (connfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
-    setsockopt (connfd, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));*/
+    struct timeval sock_timeout;
+    sock_timeout.tv_sec = 5;
+    sock_timeout.tv_usec = 0;
+    setsockopt (client_socket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+    setsockopt (client_socket, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+
     char * entire_request = malloc(MAXBUF);
     char * username = malloc(MAXBUF);
     char * password = malloc(MAXBUF);
     char * filename = malloc(MAXBUF);
     char * initial_client_request = malloc(MAXBUF);
-    
+    int msgsize = 0;
     pthread_detach(pthread_self());     
-    printf("Connection received\n");
+    
 
     int bytes_read;
     char * response = "got it";
-    /*bytes_read = read(connfd, username , MAXBUF);
-    if(bytes_read <1){
-        printf("Error reading username from client\n");
-        return NULL;
-    }
-    write(connfd, response, strlen(response));
-    printf("user is %s\n",username );
-    bytes_read = read(connfd, password , MAXBUF);
-    if(bytes_read <1){
-        printf("Error reading password from client\n");
-        return NULL;
-    }
-    write(connfd, response, strlen(response));
-    bytes_read = read(connfd, initial_client_request , MAXBUF);
-    if(bytes_read <1){
-        printf("Error reading request_type from client\n");
-        return NULL;
-    }
-    bytes_read = read(connfd, filename , MAXBUF);
-    if(bytes_read <1){
-        printf("Error reading filename from client\n");
-        return NULL;
-    }*/
+
     printf("Reading from client\n");
-    while(1){
+    /*while((bytes_read = read(client_socket, entire_request +msgsize, sizeof(entire_request)-msgsize-1)) > 0 ){
+        msgsize += bytes_read;
 
-        memset(entire_request, 0, MAXBUF);
-        bytes_read = read(connfd, entire_request , MAXBUF);
-        printf("%d\n",bytes_read );
-        printf("%s\n",entire_request );
+    }*/
 
-        write(connfd, response, strlen(response));
-        if(bytes_read == 0){
-            printf("Breaking loop\n");
-            break;
-        }
-    }
+    bytes_read = read(client_socket, entire_request,MAXBUF);
+    bytes_read = read(client_socket, entire_request,MAXBUF);
+    bytes_read = read(client_socket, entire_request,MAXBUF);
+    bytes_read = read(client_socket, entire_request,MAXBUF);
+    entire_request[msgsize-1] = '\0';
 
     //write(connfd, response, strlen(response));
 
@@ -138,7 +117,7 @@ void * thread(void * vargp)
 
 
     //need to authenticate user
-
+    return NULL;
   }//thread  
 
 /*

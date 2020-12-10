@@ -81,8 +81,8 @@ void * handle_connection(void * vargp)
     struct timeval sock_timeout;
     sock_timeout.tv_sec = 5;
     sock_timeout.tv_usec = 0;
-    setsockopt (client_socket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
-    setsockopt (client_socket, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+   /* setsockopt (client_socket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));
+    setsockopt (client_socket, SOL_SOCKET, SO_SNDTIMEO, (struct timeval*)&sock_timeout, sizeof (sock_timeout));*/
 
     char * entire_request = malloc(MAXBUF);
     char * username = malloc(MAXBUF);
@@ -102,11 +102,10 @@ void * handle_connection(void * vargp)
 
     }*/
 
+    bytes_read = read(client_socket, entire_request, MAXBUF);
+   /* bytes_read = read(client_socket, entire_request,MAXBUF);
     bytes_read = read(client_socket, entire_request,MAXBUF);
-    bytes_read = read(client_socket, entire_request,MAXBUF);
-    bytes_read = read(client_socket, entire_request,MAXBUF);
-    bytes_read = read(client_socket, entire_request,MAXBUF);
-    entire_request[msgsize-1] = '\0';
+    bytes_read = read(client_socket, entire_request,MAXBUF);*/
 
     //write(connfd, response, strlen(response));
 

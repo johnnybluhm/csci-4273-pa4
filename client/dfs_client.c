@@ -83,18 +83,16 @@ int main(int argc, char **argv)
     //get username and password
     char* username;
     char* password;
-    username = strtok(config_array[4], " ");
+    /*username = strtok(config_array[4], " ");
     username = strtok(NULL, " ");
     //username = get_user(config_array[4]);
     //password = get_user(config_array[5]);
     password = strtok(config_array[5], " ");
     password = strtok(NULL, " ");
     username[strlen(username)] = '\0';
-    password[strlen(password)] = '\0';
-    char pswd[MAXBUF];
-    char u_name[MAXBUF];
-    strcpy(u_name, username);
-    printf("username is%s\n",username );
+    password[strlen(password)] = '\0';*/
+    username = config_array[4];
+    printf("username is:\n%s\n",username );
     //connect to all servers
     server1 = connect_to_server(server1_address);
     server2 = connect_to_server(server2_address);
@@ -132,24 +130,21 @@ int main(int argc, char **argv)
         else if(user_selection == 2){
 
             char filename[MAXBUF];
-            char initial_request[MAXBUF];
+            char * initial_request = malloc(100);
             char buf[MAXBUF];
             printf("Enter filename\n");
             scanf("%s",filename);
             printf("file name is:\n%s\n",filename );
             printf("%s\n",initial_request );
-            //format of "<username> <password> get <filename>"
-            //initial_request = concat(5, "test", " ", username, " get ",filename );
+            //format of "<username> <password> get <filename>""
+            initial_request = concat(4, "alice", " password", " get ",filename );
             //build request to server
-            strcpy(initial_request, username);
-            printf("%s\n",initial_request );
-            strcat(initial_request, filename);
             //strcat(initial_request, " ");
             //strcat(initial_request, "get");
             //strcat(initial_request, " ");
             //strcat(initial_request, file_name);
             printf("Request is:\n%s\n",initial_request );
-            write(server1, username, strlen(username));
+            write(server1, initial_request, strlen(initial_request));
             
             //write(server1, password, strlen(password));
             //write(server1, "get", strlen("get"));

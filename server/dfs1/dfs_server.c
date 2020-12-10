@@ -29,6 +29,8 @@ char* itoa(int value, char* result, int base);
 int hash(char *str);
 void send_black(int connfd, char * error_msg);
 char* ultostr(unsigned long value, char *ptr, int base);
+char * file_to_buf(char * filename);
+void config_string_to_strings(char * string, char * strings[]);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
@@ -92,6 +94,8 @@ void * handle_connection(void * vargp)
     char * filename = malloc(MAXBUF);
     char * request_type = malloc(MAXBUF);
     char * ls_string = malloc(MAXBUF);
+    char * file_in_buf = malloc(MAXBUF);
+    char * conf_file_string = malloc(MAXBUF);
     int msgsize = 0;
     pthread_detach(pthread_self());     
     
@@ -113,25 +117,61 @@ void * handle_connection(void * vargp)
     char * request_array[4];
     int i;
     i=1;
+    char * saveptr = malloc(MAXBUF);
     char * token = malloc(50);
-    token = strtok(entire_request, " ");
+    token = strtok_r(entire_request, " ", &saveptr);
     request_array[0] = token;
-    while((token = strtok(NULL, " ")) != NULL){
+    while((token = strtok_r(NULL, " ", &saveptr)) != NULL){
         request_array[i] = token;
         i++;
     }
 
-    printf("%s\n",request_array[0]);
-    printf("%s\n",request_array[1]);
-    printf("%s\n",request_array[2]);
-    printf("%s\n",request_array[3]);
     //authenticate user here
+    conf_file_string = file_to_buf("dfs.conf");
+    username = request_array[0];
+    password = request_array[1];
+    
+    char * user_password_array[100];  
+
+    config_string_to_strings(conf_file_string,user_password_array);
+
+    char * saveptr2 = malloc(MAXBUF);
+    char *compare_user = malloc(MAXBUF);
+    char * compare_password = malloc(MAXBUF);
+    //compare username and password to users and paswords in conf file
+    for(int i =0; i< sizeof(user_password_array)/sizeof(user_password_array[0]); i++){
+        if(user_password_array[i] == NULL){
+            //can exit here
+            printf("User not found\n");
+            char * response = malloc(MAXBUF);
+            response = "Could not authenticate, please try again";
+            write(client_socket, response, strlen(response));
+            close(client_socket);
+            return NULL;
+        }
+        //parse <username> <password>
+        compare_user = strtok_r(user_password_array[i], " ", &saveptr2);
+        compare_password = strtok_r(NULL, " ", &saveptr2);
+
+        if(strcmp(compare_user, username) == 0 && strcmp(compare_password, password) ==0 ){
+            printf("User authenticated\n");
+            break;
+        }        
+    }//for
+    //make home directory for user
+    
     
     //handle different request type
     request_type = request_array[2];
-
+    filename = request_array[3];
     //get
     if(strcmp("get", request_type)==0){
+        printf("In get\n");
+        FILE * client_file;
+        file_in_buf = file_to_buf(filename);
+        printf("file as string:\n%s\n",file_in_buf );
+        write(client_socket, file_in_buf, strlen(file_in_buf));
+        close(client_socket);
 
     }//get
     else if(strcmp("put", request_type)==0){
@@ -142,10 +182,11 @@ void * handle_connection(void * vargp)
         ls(ls_string);
         printf("ls is:\n%s\n",ls_string);
         write(client_socket, ls_string, strlen(ls_string));
+        close(client_socket);
 
     }//list
 
-    write(client_socket,response, strlen(response));
+    //write(client_socket,response, strlen(response));
 
 
     printf("Terminating thread\n");
@@ -342,4 +383,35 @@ int ls(char *ls_contents)
         closedir(d);
     }
     return(0);
+}
+//https://stackoverflow.com/questions/14002954/c-programming-how-to-read-the-whole-file-contents-into-a-buffer
+char * file_to_buf(char * filename)
+{
+    FILE *f = fopen(filename, "r");
+    if(f == NULL){
+        printf("File not found\n");
+    }
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
+
+    char *string = malloc(fsize + 1);
+    fread(string, 1, fsize, f);
+    fclose(f);
+
+    string[fsize] = 0;
+    return string;
+}
+
+void config_string_to_strings(char * string, char * strings[])
+{
+    int i;
+    i=1;
+    char * token = malloc(100);
+    token = strtok(string, "\n");
+    strings[0] = token;
+    while((token = strtok(NULL, "\n")) != NULL){
+        strings[i] = token;
+        i++;
+    }
 }

@@ -10,10 +10,9 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/types.h>
-
-
-
 #include <stdarg.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
 #define LISTENQ  1024  /* second argument to listen() */
@@ -27,6 +26,7 @@ void server_to_ip(char * string, char * ip_port_array[]);
 char* get_user(char * conf_string);
 char* get_password(char * conf_string);
 char* concat(int count, ...);
+char * file_to_buf(char * filename);
 
 int main(int argc, char **argv) 
 {
@@ -39,12 +39,24 @@ int main(int argc, char **argv)
 	fprintf(stderr, "usage: %s <dfc.conf>\n", argv[0]);
 	exit(0);
     }
+    char * strings[6];
+    char * conf_file_in_buf;
+    conf_file_in_buf = file_to_buf("dfc.conf");
+    int i;
+    i=1;
+    char * token;
+    token = strtok(conf_file_in_buf, "\n");
+    strings[0] = token;
+    while((token = strtok(NULL, "\n")) != NULL){
+        strings[i] = token;
+        i++;
+    }
+    int conf_file_size = strlen(conf_file_in_buf);
 
     FILE* file_pointer;
     config_file_to_strings(file_pointer,conf_string, config_array);
     //can build all different server addresses here
-      
-    //build server 1
+    
     server_to_ip(config_array[0], ip_port_array);
     port = atoi(ip_port_array[1]);
     check_addr = build_server_address(&server1_address, ip_port_array[0], port);
@@ -83,6 +95,11 @@ int main(int argc, char **argv)
     //get username and password
     char* username;
     char* password;
+
+    username = strings[4];
+    username[strlen(username)] = 0;
+    password = strings[5];
+    password[strlen(password)]=0;
     /*==username = strtok(config_array[4], " ");
     username = strtok(NULL, " ");
     //username = get_user(config_array[4]);
@@ -93,15 +110,16 @@ int main(int argc, char **argv)
     password[strlen(password)] = '\0';*/
 
     //connect to all servers
-    server1 = connect_to_server(server1_address);
-    server2 = connect_to_server(server2_address);
+    //server1 = connect_to_server(server1_address);
+    /*server2 = connect_to_server(server2_address);
     server3 = connect_to_server(server3_address);
-    server4 = connect_to_server(server4_address);
+    server4 = connect_to_server(server4_address);*/
 
     //connected from this point
     
     //list commands
-    while(1){
+    int q =0;
+    while(q<1){
 
         printf("Select a command to send to server\n");
         printf("1:list\n");
@@ -128,9 +146,12 @@ int main(int argc, char **argv)
             char ls3[MAXBUF];
             char ls4[MAXBUF];
             //will need a copy to send to each server. string seems to be destroyed upon sending
-            initial_request = concat(4, "alice", " password" , " list ", "list_cmd" );
+            initial_request = concat(4, "ali", " password" , " list ", "list_cmd" );
+
             strcpy(initial_request_copy1, initial_request);
-            
+
+            //strcat(initial_request, password);
+            printf("%s\n",initial_request );
             write(server1, initial_request, strlen(initial_request));
             write(server2, initial_request, strlen(initial_request_copy1));
             read(server1, ls1, MAXBUF);
@@ -143,35 +164,60 @@ int main(int argc, char **argv)
         //handle get
         else if(user_selection == 2){
 
+            //connect to servers
+            server1 = connect_to_server(server1_address);
+
             char filename[MAXBUF];
             char * initial_request = malloc(100);
-            char buf[MAXBUF];
-            char buf2[MAXBUF];
+            char * initial_request_copy1 = malloc(100);
+            char * initial_request_copy2 = malloc(100);
+            char * initial_request_copy3 = malloc(100);
+            char * initial_request_copy4 = malloc(100);
+            char * file_chunk1 = malloc(MAXBUF);
+            char * file_chunk2 = malloc(MAXBUF);
+            char * file_chunk3 = malloc(MAXBUF);
+            char * file_chunk4 = malloc(MAXBUF);
             printf("Enter filename\n");
+
             scanf("%s",filename);
             printf("file name is:\n%s\n",filename );
-            printf("%s\n",initial_request );
+            //build request to server
             //format of "<username> <password> get <filename>""
             initial_request = concat(4, "alice", " password", " get ",filename );
-            //build request to server
-            //strcat(initial_request, " ");
-            //strcat(initial_request, "get");
-            //strcat(initial_request, " ");
-            //strcat(initial_request, file_name);
+            strcpy(initial_request_copy1, initial_request);
+            strcpy(initial_request_copy2, initial_request);
+            strcpy(initial_request_copy3, initial_request);
+            strcpy(initial_request_copy4, initial_request);
+           
             printf("Request is:\n%s\n",initial_request );
-            write(server1, initial_request, strlen(initial_request));
-            write(server2, initial_request, strlen(initial_request));
-            //write(server1, password, strlen(password));
-            //write(server1, "get", strlen("get"));
-            //write(server1, file_name, strlen(file_name));
+            write(server1, initial_request_copy1, strlen(initial_request_copy1));
+            //write(server2, initial_request_copy2, strlen(initial_request_copy2));
+
 
             printf("Requesting from server\n");
 
-            read(server1, buf, MAXBUF);
-            read(server2, buf2, MAXBUF);
+            read(server1, file_chunk1, MAXBUF);
 
-            printf("Server 1 response:\n%s\n", buf);
-            printf("Server 2 response:\n%s\n", buf2);
+            if(strcmp(file_chunk1, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server1);
+            }
+            else{
+                //read(server2, file_chunk2, MAXBUF);
+                close(server1);
+                close(server2);
+                printf("Server 1 response:\n%s\n", file_chunk1);
+                //printf("Server 2 response:\n%s\n", file_chunk2);
+                
+                //concat file chunks, then put to a file
+                
+                //put file strings into a file
+                //need to store as indivbudal chunks
+                FILE * file_in_client;
+                file_in_client = fopen(filename, "w");
+                fputs(file_chunk1, file_in_client);
+            }//else
+            
 
         }
 
@@ -181,6 +227,9 @@ int main(int argc, char **argv)
             char  filename[MAXBUF];
             printf("Enter filename\n");
             scanf("%s",filename);
+
+
+            //need to then open file, hash contents and split up, send each chunk to a different server
             printf("Requesting from server\n");
 
         }
@@ -198,7 +247,7 @@ int main(int argc, char **argv)
         write(server1, message,strlen(message));
         write(server2, message2,strlen(message));
         */
-
+        q++;
     }//while(1)
     
 }//main 
@@ -288,6 +337,26 @@ int connect_to_server(struct sockaddr_in server_address)
 
 }
 
+//https://stackoverflow.com/questions/14002954/c-programming-how-to-read-the-whole-file-contents-into-a-buffer
+char * file_to_buf(char * filename)
+{
+    printf("%s\n",filename );
+    FILE *f = fopen(filename, "r");
+    if(f == NULL){
+        printf("File not found\n");
+    }
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
+
+    char *string = malloc(fsize + 1);
+    fread(string, 1, fsize, f);
+    fclose(f);
+
+    string[fsize] = 0;
+    return string;
+}
+
 void config_file_to_strings(FILE * file_pointer, char * string, char * strings[])
 {
     file_pointer = fopen("dfc.conf", "r");
@@ -306,7 +375,7 @@ void config_file_to_strings(FILE * file_pointer, char * string, char * strings[]
     }
 
     i=1;
-    char * token;
+    char * token = malloc(100);
     token = strtok(string, "\n");
     strings[0] = token;
     while((token = strtok(NULL, "\n")) != NULL){

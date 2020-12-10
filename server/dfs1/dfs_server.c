@@ -146,9 +146,7 @@ void * handle_connection(void * vargp)
     }//list
 
     write(client_socket,response, strlen(response));
-    /*printf("pass is %s\n",password );
-    printf("req is %s\n",initial_client_request );
-    printf("filename is %s\n",filename );*/
+
 
     printf("Terminating thread\n");
     //need to authenticate user

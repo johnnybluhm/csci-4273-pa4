@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 {
     int port,server1,server2,server3,server4,  check_addr, clientlen=sizeof(struct sockaddr_in);
     struct sockaddr_in server1_address, server2_address, server3_address,server4_address;
-    char conf_string[MAXBUF];
+    char * conf_string[MAXBUF];
     char * config_array[6];
     char * ip_port_array[2];
     if (argc != 2) {
@@ -42,7 +42,6 @@ int main(int argc, char **argv)
 
     FILE* file_pointer;
     config_file_to_strings(file_pointer,conf_string, config_array);
-
     //can build all different server addresses here
       
     //build server 1
@@ -84,7 +83,7 @@ int main(int argc, char **argv)
     //get username and password
     char* username;
     char* password;
-    /*username = strtok(config_array[4], " ");
+    /*==username = strtok(config_array[4], " ");
     username = strtok(NULL, " ");
     //username = get_user(config_array[4]);
     //password = get_user(config_array[5]);
@@ -92,8 +91,7 @@ int main(int argc, char **argv)
     password = strtok(NULL, " ");
     username[strlen(username)] = '\0';
     password[strlen(password)] = '\0';*/
-    username = config_array[4];
-    printf("username is:\n%s\n",username );
+
     //connect to all servers
     server1 = connect_to_server(server1_address);
     server2 = connect_to_server(server2_address);
@@ -124,13 +122,21 @@ int main(int argc, char **argv)
         else if(user_selection == 1){
 
             char * initial_request = malloc(100);
-            char buf[MAXBUF];
-            initial_request = concat(4, "alice", " password", " list ", "list_cmd" );
-            //printf("req: is\n%s\n",initial_request );
+            char * initial_request_copy1 = malloc(100);
+            char ls1[MAXBUF];
+            char ls2[MAXBUF];
+            char ls3[MAXBUF];
+            char ls4[MAXBUF];
+            //will need a copy to send to each server. string seems to be destroyed upon sending
+            initial_request = concat(4, "alice", " password" , " list ", "list_cmd" );
+            strcpy(initial_request_copy1, initial_request);
+            
             write(server1, initial_request, strlen(initial_request));
-
-            read(server1, buf, MAXBUF);
-            printf("Server 1 list response:\n%s\n", buf);
+            write(server2, initial_request, strlen(initial_request_copy1));
+            read(server1, ls1, MAXBUF);
+            read(server2, ls2, MAXBUF);
+            printf("Server 1 directory contents:\n%s\n\n", ls1);
+            printf("Server 2 directory contents:\n%s\n\n", ls2);
 
         }
 
@@ -298,6 +304,7 @@ void config_file_to_strings(FILE * file_pointer, char * string, char * strings[]
         c = fgetc(file_pointer);
         i++;
     }
+
     i=1;
     char * token;
     token = strtok(string, "\n");

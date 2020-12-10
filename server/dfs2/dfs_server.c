@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/types.h>
+#include <dirent.h> //ls
 
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
@@ -88,7 +89,8 @@ void * handle_connection(void * vargp)
     char * username = malloc(MAXBUF);
     char * password = malloc(MAXBUF);
     char * filename = malloc(MAXBUF);
-    char * initial_client_request = malloc(MAXBUF);
+    char * request_type = malloc(MAXBUF);
+    char * ls_string = malloc(MAXBUF);
     int msgsize = 0;
     pthread_detach(pthread_self());     
     
@@ -96,25 +98,49 @@ void * handle_connection(void * vargp)
     int bytes_read;
     char * response = "server 2 got it";
 
-    printf("Reading from client\n");
-    /*while((bytes_read = read(client_socket, entire_request +msgsize, sizeof(entire_request)-msgsize-1)) > 0 ){
-        msgsize += bytes_read;
-
-    }*/
-
+    printf("Waiting for client request...\n");
     bytes_read = read(client_socket, entire_request, MAXBUF);
-   /* bytes_read = read(client_socket, entire_request,MAXBUF);
-    bytes_read = read(client_socket, entire_request,MAXBUF);
-    bytes_read = read(client_socket, entire_request,MAXBUF);*/
 
-    //write(connfd, response, strlen(response));
+    printf("Request is:\n%s\n",entire_request );
+    //parse client request
+    //comes in form <username> <password> <request_type> <filename>
+    char * request_array[4];
+    int i;
+    i=1;
+    char * token = malloc(50);
+    token = strtok(entire_request, " ");
+    request_array[0] = token;
+    while((token = strtok(NULL, " ")) != NULL){
+        request_array[i] = token;
+        i++;
+    }
 
-    printf("%s\n",entire_request );
-    /*printf("pass is %s\n",password );
-    printf("req is %s\n",initial_client_request );
-    printf("filename is %s\n",filename );*/
+    printf("%s\n",request_array[0]);
+    printf("%s\n",request_array[1]);
+    printf("%s\n",request_array[2]);
+    printf("%s\n",request_array[3]);
+    //authenticate user here
+    
+    //handle different request type
+    request_type = request_array[2];
+
+    //get
+    if(strcmp("get", request_type)==0){
+
+    }//get
+    else if(strcmp("put", request_type)==0){
+
+    }//put
+    else if(strcmp("list", request_type)==0){
+
+        ls(ls_string);
+        printf("ls is:\n%s\n",ls_string);
+        write(client_socket, ls_string, strlen(ls_string));
+
+    }//list
 
     write(client_socket,response, strlen(response));
+    printf("Terminating thread\n");
     //need to authenticate user
     return NULL;
   }//thread  
@@ -291,4 +317,21 @@ void send_black(int connfd, char * error_msg)
     //printf("server returning a http message with the following content.\n%s\n",httpmsg);
     write(connfd, httpmsg, strlen(httpmsg));
     
+}
+
+int ls(char *ls_contents)
+{
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(".");
+    if (d)
+    {
+        while ((dir = readdir(d)) != NULL)
+        {
+            strcat(ls_contents, dir->d_name);
+            strcat(ls_contents, "\n");
+        }
+        closedir(d);
+    }
+    return(0);
 }

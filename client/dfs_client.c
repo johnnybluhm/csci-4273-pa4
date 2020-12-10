@@ -12,6 +12,7 @@
 #include <sys/types.h>
 
 
+
 #include <stdarg.h>
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
@@ -122,7 +123,14 @@ int main(int argc, char **argv)
         //handle list
         else if(user_selection == 1){
 
-            printf("Server's response:\n\n");
+            char * initial_request = malloc(100);
+            char buf[MAXBUF];
+            initial_request = concat(4, "alice", " password", " list ", "list_cmd" );
+            //printf("req: is\n%s\n",initial_request );
+            write(server1, initial_request, strlen(initial_request));
+
+            read(server1, buf, MAXBUF);
+            printf("Server 1 list response:\n%s\n", buf);
 
         }
 
@@ -132,6 +140,7 @@ int main(int argc, char **argv)
             char filename[MAXBUF];
             char * initial_request = malloc(100);
             char buf[MAXBUF];
+            char buf2[MAXBUF];
             printf("Enter filename\n");
             scanf("%s",filename);
             printf("file name is:\n%s\n",filename );
@@ -145,7 +154,7 @@ int main(int argc, char **argv)
             //strcat(initial_request, file_name);
             printf("Request is:\n%s\n",initial_request );
             write(server1, initial_request, strlen(initial_request));
-            
+            write(server2, initial_request, strlen(initial_request));
             //write(server1, password, strlen(password));
             //write(server1, "get", strlen("get"));
             //write(server1, file_name, strlen(file_name));
@@ -153,8 +162,10 @@ int main(int argc, char **argv)
             printf("Requesting from server\n");
 
             read(server1, buf, MAXBUF);
+            read(server2, buf2, MAXBUF);
 
-            printf("Server response %s\n", buf);
+            printf("Server 1 response:\n%s\n", buf);
+            printf("Server 2 response:\n%s\n", buf2);
 
         }
 

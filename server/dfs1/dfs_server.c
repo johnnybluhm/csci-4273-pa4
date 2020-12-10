@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <dirent.h> //ls
 #include <unistd.h>
+#include <sys/stat.h>
 
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
@@ -31,6 +32,7 @@ void send_black(int connfd, char * error_msg);
 char* ultostr(unsigned long value, char *ptr, int base);
 char * file_to_buf(char * filename);
 void config_string_to_strings(char * string, char * strings[]);
+void check_dir(char * user);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
@@ -112,6 +114,7 @@ void * handle_connection(void * vargp)
     bytes_read = read(client_socket, entire_request, MAXBUF);
 
     printf("Request is:\n%s\n",entire_request );
+
     //parse client request
     //comes in form <username> <password> <request_type> <filename>
     char * request_array[4];
@@ -144,7 +147,7 @@ void * handle_connection(void * vargp)
             //can exit here
             printf("User not found\n");
             char * response = malloc(MAXBUF);
-            response = "Could not authenticate, please try again";
+            response = "bad user";
             write(client_socket, response, strlen(response));
             close(client_socket);
             return NULL;
@@ -158,12 +161,14 @@ void * handle_connection(void * vargp)
             break;
         }        
     }//for
-    //make home directory for user
     
+    //make home directory for user
+    check_dir(username);
     
     //handle different request type
     request_type = request_array[2];
     filename = request_array[3];
+    printf("request is: \n%s\n",request_type );
     //get
     if(strcmp("get", request_type)==0){
         printf("In get\n");
@@ -175,7 +180,7 @@ void * handle_connection(void * vargp)
 
     }//get
     else if(strcmp("put", request_type)==0){
-
+        printf("In put\n");
     }//put
     else if(strcmp("list", request_type)==0){
 
@@ -413,5 +418,13 @@ void config_string_to_strings(char * string, char * strings[])
     while((token = strtok(NULL, "\n")) != NULL){
         strings[i] = token;
         i++;
+    }
+}
+
+void check_dir(char * user){
+    
+    struct stat st = {0};
+    if (stat(user, &st) == -1) {
+        mkdir(user, 0755);
     }
 }

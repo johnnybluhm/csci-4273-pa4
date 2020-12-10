@@ -17,6 +17,10 @@
 #define MAXBUF   8192  /* max I/O buffer size */
 #define LISTENQ  1024  /* second argument to listen() */
 
+#define OK       0
+#define NO_INPUT 1
+#define TOO_LONG 2
+
 void *thread(void *vargp);
 char* itoa(int value, char* result, int base);
 int build_server_address(struct sockaddr_in* serv_addr, char * ip_add, int port_num);
@@ -119,6 +123,7 @@ int main(int argc, char **argv)
     
     //list commands
     int q =0;
+    //q<1
     while(q<1){
 
         printf("Select a command to send to server\n");
@@ -126,10 +131,22 @@ int main(int argc, char **argv)
         printf("2:get\n");
         printf("3:put\n");
         printf("99: exit\n");
+        char user_string[2];
         int user_selection;
+        //user_string[1] = 0;
+        /*if(scanf("%d", &user_selection) ==0){
+            fflush(stdin);
+            //scanf(" %d", &user_selection);
+        }*/
+        //scanf(" %d", &user_selection);
+        //memset(user_string, "", sizeof(user_string));
+        //fgets(user_string, sizeof(int), stdin);
+        //user_selection = atoi(user_string);
         char a;
-        scanf("%d", &user_selection);
         //a = getchar();
+        scanf("%d", &user_selection);
+        //a = (int)a;
+        //printf("%d\n",a );
         //exit conditional
         if(user_selection == 99){
             printf("Goodbye!\n");
@@ -166,7 +183,7 @@ int main(int argc, char **argv)
 
             //connect to servers
             server1 = connect_to_server(server1_address);
-
+            
             char filename[MAXBUF];
             char * initial_request = malloc(100);
             char * initial_request_copy1 = malloc(100);
@@ -178,8 +195,9 @@ int main(int argc, char **argv)
             char * file_chunk3 = malloc(MAXBUF);
             char * file_chunk4 = malloc(MAXBUF);
             printf("Enter filename\n");
-
-            scanf("%s",filename);
+            memset(filename, "", sizeof(filename));
+            scanf("%s", filename);
+            
             printf("file name is:\n%s\n",filename );
             //build request to server
             //format of "<username> <password> get <filename>""
@@ -190,12 +208,16 @@ int main(int argc, char **argv)
             strcpy(initial_request_copy4, initial_request);
            
             printf("Request is:\n%s\n",initial_request );
+
+            //write request to all servers
             write(server1, initial_request_copy1, strlen(initial_request_copy1));
             //write(server2, initial_request_copy2, strlen(initial_request_copy2));
 
 
             printf("Requesting from server\n");
 
+
+            //read response from all servers
             read(server1, file_chunk1, MAXBUF);
 
             if(strcmp(file_chunk1, "bad user") ==0){
@@ -224,30 +246,65 @@ int main(int argc, char **argv)
         //handle put
         else if(user_selection == 3){
 
-            char  filename[MAXBUF];
+            //connect to servers
+            server1 = connect_to_server(server1_address);
+            
+            char filename[MAXBUF];
+            char * initial_request = malloc(100);
+            char * initial_request_copy1 = malloc(100);
+            char * initial_request_copy2 = malloc(100);
+            char * initial_request_copy3 = malloc(100);
+            char * initial_request_copy4 = malloc(100);
+            char * file_chunk1 = malloc(MAXBUF);
+            char * file_chunk2 = malloc(MAXBUF);
+            char * file_chunk3 = malloc(MAXBUF);
+            char * file_chunk4 = malloc(MAXBUF);
             printf("Enter filename\n");
-            scanf("%s",filename);
+            memset(filename, "", sizeof(filename));
+            scanf("%s", filename);
 
+            //build request to server
+            //format of "<username> <password> put <filename>""
+            initial_request = concat(4, "alice", " password", " put ",filename );
+            strcpy(initial_request_copy1, initial_request);
+            strcpy(initial_request_copy2, initial_request);
+            strcpy(initial_request_copy3, initial_request);
+            strcpy(initial_request_copy4, initial_request);
 
             //need to then open file, hash contents and split up, send each chunk to a different server
+            printf("Request is:\n%s\n",initial_request );
+
+            //write request to all servers
+            write(server1, initial_request_copy1, strlen(initial_request_copy1));
+            //write(server2, initial_request_copy2, strlen(initial_request_copy2));
+
+
             printf("Requesting from server\n");
 
-        }
+
+            //read response from all servers
+            read(server1, file_chunk1, MAXBUF);
+
+            if(strcmp(file_chunk1, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server1);
+            }
+            else{
+                //read(server2, file_chunk2, MAXBUF);
+                close(server1);
+                close(server2);
+                printf("Server 1 response:\n%s\n", file_chunk1);
+                //printf("Server 2 response:\n%s\n", file_chunk2);
+
+            }//else
+
+        }//put
         else{
             printf("Please enter a valid command\n\n");
-        }
+        }//bad command
 
-        /*
-        char * message = "server 1 hello";
-        char * message2 = "server 2 hello";
-        printf("you selected %d\n",user_selection );
-
-        printf("sending to server\n");
-
-        write(server1, message,strlen(message));
-        write(server2, message2,strlen(message));
-        */
         q++;
+
     }//while(1)
     
 }//main 
@@ -419,4 +476,29 @@ void server_to_ip(char * string, char * ip_port_array[])
     ip_port_array[0] = strtok(token, ":");
     ip_port_array[1] = strtok(NULL, ":");
 
+}
+//https://stackoverflow.com/questions/4023895/how-do-i-read-a-string-entered-by-the-user-in-c
+int getLine (char *prmpt, char *buff, size_t sz) {
+    int ch, extra;
+
+    // Get line with buffer overrun protection.
+    if (prmpt != NULL) {
+        printf ("%s", prmpt);
+        fflush (stdout);
+    }
+    if (fgets (buff, sz, stdin) == NULL)
+        return NO_INPUT;
+
+    // If it was too long, there'll be no newline. In that case, we flush
+    // to end of line so that excess doesn't affect the next call.
+    if (buff[strlen(buff)-1] != '\n') {
+        extra = 0;
+        while (((ch = getchar()) != '\n') && (ch != EOF))
+            extra = 1;
+        return (extra == 1) ? TOO_LONG : OK;
+    }
+
+    // Otherwise remove newline and give string back to caller.
+    buff[strlen(buff)-1] = '\0';
+    return OK;
 }

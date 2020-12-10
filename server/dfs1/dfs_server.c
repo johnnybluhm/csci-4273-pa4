@@ -33,6 +33,7 @@ char* ultostr(unsigned long value, char *ptr, int base);
 char * file_to_buf(char * filename);
 void config_string_to_strings(char * string, char * strings[]);
 void check_dir(char * user);
+int ls(char *ls_contents, char * user);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
@@ -141,6 +142,7 @@ void * handle_connection(void * vargp)
     char * saveptr2 = malloc(MAXBUF);
     char *compare_user = malloc(MAXBUF);
     char * compare_password = malloc(MAXBUF);
+    //printf("SEF\n");
     //compare username and password to users and paswords in conf file
     for(int i =0; i< sizeof(user_password_array)/sizeof(user_password_array[0]); i++){
         if(user_password_array[i] == NULL){
@@ -161,19 +163,24 @@ void * handle_connection(void * vargp)
             break;
         }        
     }//for
-    
+
     //make home directory for user
     check_dir(username);
     
     //handle different request type
     request_type = request_array[2];
     filename = request_array[3];
-    printf("request is: \n%s\n",request_type );
+
     //get
     if(strcmp("get", request_type)==0){
         printf("In get\n");
         FILE * client_file;
-        file_in_buf = file_to_buf(filename);
+        char * hom_dir_file = malloc(MAXBUF);
+        strcpy(hom_dir_file, username);
+        strcat(hom_dir_file,"/");
+        strcat(hom_dir_file, filename);
+        printf("%s\n",hom_dir_file );
+        file_in_buf = file_to_buf(hom_dir_file);
         printf("file as string:\n%s\n",file_in_buf );
         write(client_socket, file_in_buf, strlen(file_in_buf));
         close(client_socket);
@@ -184,18 +191,14 @@ void * handle_connection(void * vargp)
     }//put
     else if(strcmp("list", request_type)==0){
 
-        ls(ls_string);
+        ls(ls_string, username);
         printf("ls is:\n%s\n",ls_string);
         write(client_socket, ls_string, strlen(ls_string));
         close(client_socket);
 
     }//list
 
-    //write(client_socket,response, strlen(response));
-
-
     printf("Terminating thread\n");
-    //need to authenticate user
     return NULL;
   }//thread  
 
@@ -373,11 +376,12 @@ void send_black(int connfd, char * error_msg)
     
 }
 
-int ls(char *ls_contents)
+int ls(char *ls_contents, char * user)
 {
     DIR *d;
     struct dirent *dir;
-    d = opendir(".");
+
+    d = opendir(user);
     if (d)
     {
         while ((dir = readdir(d)) != NULL)

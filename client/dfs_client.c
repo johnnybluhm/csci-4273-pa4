@@ -156,6 +156,10 @@ int main(int argc, char **argv)
         //handle list
         else if(user_selection == 1){
 
+
+            //connect to servers
+            server1 = connect_to_server(server1_address);
+
             char * initial_request = malloc(100);
             char * initial_request_copy1 = malloc(100);
             char ls1[MAXBUF];
@@ -163,18 +167,18 @@ int main(int argc, char **argv)
             char ls3[MAXBUF];
             char ls4[MAXBUF];
             //will need a copy to send to each server. string seems to be destroyed upon sending
-            initial_request = concat(4, "ali", " password" , " list ", "list_cmd" );
+            initial_request = concat(4, "alic", " password" , " list ", "list_cmd" );
 
             strcpy(initial_request_copy1, initial_request);
 
             //strcat(initial_request, password);
             printf("%s\n",initial_request );
             write(server1, initial_request, strlen(initial_request));
-            write(server2, initial_request, strlen(initial_request_copy1));
+            //write(server2, initial_request, strlen(initial_request_copy1));
             read(server1, ls1, MAXBUF);
-            read(server2, ls2, MAXBUF);
+            //read(server2, ls2, MAXBUF);
             printf("Server 1 directory contents:\n%s\n\n", ls1);
-            printf("Server 2 directory contents:\n%s\n\n", ls2);
+            //printf("Server 2 directory contents:\n%s\n\n", ls2);
 
         }
 

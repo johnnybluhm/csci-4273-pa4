@@ -54,8 +54,8 @@ int main(int argc, char **argv)
     } 
 
     if (argc != 2) {
-	fprintf(stderr, "usage: %s <dfc.conf>\n", argv[0]);
-	exit(0);
+    fprintf(stderr, "usage: %s <dfc.conf>\n", argv[0]);
+    exit(0);
     }
 
     port = atoi(argv[1]);
@@ -198,7 +198,14 @@ void * handle_connection(void * vargp)
         
         write(client_socket,put_response,strlen(put_response));
         close(client_socket);
-
+        printf("%s\n",file_chunk );
+        char *chunk1 = malloc(MAXBUF);
+        char *chunk2 = malloc(MAXBUF);
+        char *saveptr3 = malloc(MAXBUF);
+        chunk1 = strtok_r(file_chunk, "\n\n\n\n", &saveptr3);
+        chunk2 = strtok_r(NULL, "\n\n\n\n", &saveptr3);
+        printf("Chunk1 is\n%s\n",chunk1);
+        printf("Chunk2 is\n%s\n",chunk2);
         //save file to home dir
         FILE * file_to_save;
         char * filename_with_num = malloc(MAXBUF);
@@ -208,7 +215,7 @@ void * handle_connection(void * vargp)
         strcat(filename_with_num, filename);
         strcat(filename_with_num,".1");
 
-        file_to_save = fopen(filename_with_num, "a");
+        file_to_save = fopen(filename_with_num, "w");
         if(file_to_save == NULL){
             printf("Error writing to file\n");
             return NULL;

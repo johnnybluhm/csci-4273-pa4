@@ -206,7 +206,7 @@ void * handle_connection(void * vargp)
         strcpy(filename_with_num, username);
         strcat(filename_with_num,"/");
         strcat(filename_with_num, filename);
-        strcat(filename_with_num,".1");
+        strcat(filename_with_num,".2");
 
         file_to_save = fopen(filename_with_num, "a");
         if(file_to_save == NULL){

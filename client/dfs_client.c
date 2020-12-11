@@ -304,13 +304,10 @@ int main(int argc, char **argv)
             char * server_res2 = malloc(MAXBUF);
             char * server_res3 = malloc(MAXBUF);
             char * server_res4 = malloc(MAXBUF);
-            /*printf("Enter filename\n");
-            memset(filename, "", sizeof(filename));
-            scanf("%s", filename);*/
 
             //build request to server
-            //format of "<username> <password> put <filename>""
-            initial_request = concat(5, username," ", password , " get ", filename);
+            //format of "<username> <password> put <filename>"
+            initial_request = concat(5, username," ", password , " put ", filename);
             strcpy(initial_request_copy1, initial_request);
             strcpy(initial_request_copy2, initial_request);
             strcpy(initial_request_copy3, initial_request);
@@ -350,10 +347,8 @@ int main(int argc, char **argv)
                 printf("User could not be authenticated\n");
                 close(server4);
                 return -1;
-            }
-
-                
-            //write back to servers with file chunks
+            }                
+            
 
             //convert file to string
             //hash file
@@ -398,8 +393,16 @@ int main(int argc, char **argv)
             }
 
             //need to switch hash value
-
-            write(server1, file_chunk1, strlen(file_chunk1));
+            
+            char * combo_chunk = malloc(MAXBUF);
+            strcpy(combo_chunk, file_chunk1);
+            strcat(combo_chunk, "\n\n\n\n");
+            strcat(combo_chunk, file_chunk3);
+            strcat(combo_chunk, "\n\n\n\n");
+            printf("%s\n",combo_chunk);
+            
+            //write back to servers with file chunks
+            write(server1, combo_chunk, strlen(combo_chunk));
             write(server2, file_chunk2, strlen(file_chunk2));
             write(server3, file_chunk3, strlen(file_chunk3));
             write(server4, file_chunk4, strlen(file_chunk4));
@@ -408,6 +411,8 @@ int main(int argc, char **argv)
             read(server2,server_res2, MAXBUF);
             read(server3,server_res3, MAXBUF);
             read(server4,server_res4, MAXBUF);
+
+            write(server1, file_chunk2, strlen(file_chunk2));
 
             close(server1);
             close(server2);
@@ -630,3 +635,119 @@ int hash(char *str)
 
     return hash;
 }
+
+/*void put_func(char * initial_request)
+{
+    char * initial_request_copy1 = malloc(100);
+    char * initial_request_copy2 = malloc(100);
+    char * initial_request_copy3 = malloc(100);
+    char * initial_request_copy4 = malloc(100);
+    char * server_res1 = malloc(MAXBUF);
+    char * server_res2 = malloc(MAXBUF);
+    char * server_res3 = malloc(MAXBUF);
+    char * server_res4 = malloc(MAXBUF);
+
+
+    strcpy(initial_request_copy1, initial_request);
+    strcpy(initial_request_copy2, initial_request);
+    strcpy(initial_request_copy3, initial_request);
+    strcpy(initial_request_copy4, initial_request);
+
+    //need to then open file, hash contents and split up, send each chunk to a different server
+
+    //write request to all servers
+    write(server1, initial_request_copy1, strlen(initial_request_copy1));
+    write(server2, initial_request_copy2, strlen(initial_request_copy2));
+    write(server3, initial_request_copy3, strlen(initial_request_copy3));
+    write(server4, initial_request_copy4, strlen(initial_request_copy4));        
+
+    printf("Waiting for server reply...\n");
+    //read response from all servers
+    read(server1, server_res1, MAXBUF);
+    read(server2, server_res2, MAXBUF);
+    read(server3, server_res3, MAXBUF);
+    read(server4, server_res4, MAXBUF);
+
+    if(strcmp(server_res1, "bad user") ==0){
+        printf("User could not be authenticated\n");
+        close(server1);
+        return -1;
+    }
+    if(strcmp(server_res2, "bad user") ==0){
+        printf("User could not be authenticated\n");
+        close(server2);
+        return -1;
+    }
+    if(strcmp(server_res3, "bad user") ==0){
+        printf("User could not be authenticated\n");
+        close(server3);
+        return -1;
+    }
+    if(strcmp(server_res4, "bad user") ==0){
+        printf("User could not be authenticated\n");
+        close(server4);
+        return -1;
+    }                
+    
+
+    //convert file to string
+    //hash file
+    char * client_file_string = malloc(MAXBUF);
+    char * client_file_hash = malloc(MAXBUF);
+    client_file_string = file_to_buf(filename);
+    strcpy(client_file_hash, client_file_string);
+    int hashed_file;
+    hashed_file = hash(client_file_hash);
+    hashed_file = hashed_file % 4;
+    if(hashed_file<0){
+        hashed_file = hashed_file*-1;
+    }
+
+    int filesize = strlen(client_file_string);
+    int chunk1 = filesize/4;
+    int chunk2 = chunk1*2;
+    int chunk3 = chunk1*3;
+    char file_chunk1[MAXBUF];
+    char file_chunk2[MAXBUF];
+    char file_chunk3[MAXBUF];
+    char file_chunk4[MAXBUF];
+
+    //fill file chunks
+    for(int i =0; i < chunk1; i++){
+        file_chunk1[i]=client_file_string[i];
+    }
+    int j =0;
+    for(int i =chunk1; i < chunk2; i++){
+        file_chunk2[j]=client_file_string[i];
+        j++;
+    }
+    j = 0;
+    for(int i =chunk2; i < chunk3; i++){
+        file_chunk3[j]=client_file_string[i];
+        j++;
+    }
+    j=0;
+    for(int i =chunk3; i < filesize; i++){
+        file_chunk4[j]=client_file_string[i];
+        j++;
+    }
+
+    //need to switch hash value
+    
+    
+    //write back to servers with file chunks
+    write(server1, file_chunk1, strlen(file_chunk1));
+    write(server2, file_chunk2, strlen(file_chunk2));
+    write(server3, file_chunk3, strlen(file_chunk3));
+    write(server4, file_chunk4, strlen(file_chunk4));
+
+    read(server1,server_res1, MAXBUF);
+    read(server2,server_res2, MAXBUF);
+    read(server3,server_res3, MAXBUF);
+    read(server4,server_res4, MAXBUF);
+
+    close(server1);
+    close(server2);
+    close(server3);
+    close(server4);
+}*/

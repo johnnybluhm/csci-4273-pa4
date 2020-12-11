@@ -276,16 +276,12 @@ int main(int argc, char **argv)
             strcpy(initial_request_copy4, initial_request);
 
             //need to then open file, hash contents and split up, send each chunk to a different server
-            printf("Request is:\n%s\n",initial_request );
 
             //write request to all servers
             write(server1, initial_request_copy1, strlen(initial_request_copy1));
-            //write(server2, initial_request_copy2, strlen(initial_request_copy2));
+            //write(server2, initial_request_copy2, strlen(initial_request_copy2));            
 
-
-            printf("Requesting from server\n");
-
-
+            printf("Waiting for server reply...\n");
             //read response from all servers
             read(server1, file_chunk1, MAXBUF);
 
@@ -294,10 +290,17 @@ int main(int argc, char **argv)
                 close(server1);
             }
             else{
-                //read(server2, file_chunk2, MAXBUF);
-                close(server1);
-                close(server2);
-                printf("Server 1 response:\n%s\n", file_chunk1);
+                //write back to servers with file chunks
+
+                char * client_file_string = malloc(MAXBUF);
+                client_file_string = file_to_buf(filename);
+                
+                write(server1, client_file_string, strlen(client_file_string));
+
+                read(server1,file_chunk1, MAXBUF);
+
+                printf("Server final reply:\n%s\n",file_chunk1);
+
                 //printf("Server 2 response:\n%s\n", file_chunk2);
 
             }//else

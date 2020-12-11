@@ -188,6 +188,18 @@ void * handle_connection(void * vargp)
     }//get
     else if(strcmp("put", request_type)==0){
         printf("In put\n");
+        char * put_response = malloc(MAXBUF);
+        char * file_chunk = malloc(MAXBUF);
+        put_response = "Ready for files";
+        write(client_socket,put_response, strlen(put_response));
+
+        bytes_read = read(client_socket, file_chunk, MAXBUF);
+        put_response = "File saved successfully";
+        printf("File chunk:\n%s\n",file_chunk);
+        write(client_socket,put_response,strlen(put_response));
+
+        
+
     }//put
     else if(strcmp("list", request_type)==0){
 

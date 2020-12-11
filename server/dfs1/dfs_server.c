@@ -187,7 +187,7 @@ void * handle_connection(void * vargp)
 
     }//get
     else if(strcmp("put", request_type)==0){
-        
+
         printf("In put\n");
         char * put_response = malloc(MAXBUF);
         char * file_chunk = malloc(MAXBUF);
@@ -195,9 +195,21 @@ void * handle_connection(void * vargp)
         write(client_socket,put_response, strlen(put_response));
 
         bytes_read = read(client_socket, file_chunk, MAXBUF);
-        put_response = "File saved successfully";
+        put_response = "File received successfully";
         printf("File chunk:\n%s\n",file_chunk);
         write(client_socket,put_response,strlen(put_response));
+        FILE * file_to_save;
+        char * filename_with_num = malloc(MAXBUF);
+        strcpy(filename_with_num, username);
+        strcat(filename_with_num,"/");
+        strcat(filename_with_num, filename);
+        strcat(filename_with_num,".1");
+        printf("%s\n",filename_with_num );
+        file_to_save = fopen(filename_with_num, "w");
+        if(file_to_save == NULL){
+            printf("Error writing to file\n");
+            return NULL;
+        }
 
         
 

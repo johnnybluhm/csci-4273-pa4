@@ -187,6 +187,7 @@ void * handle_connection(void * vargp)
 
     }//get
     else if(strcmp("put", request_type)==0){
+        
         printf("In put\n");
         char * put_response = malloc(MAXBUF);
         char * file_chunk = malloc(MAXBUF);

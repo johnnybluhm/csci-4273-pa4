@@ -259,10 +259,10 @@ int main(int argc, char **argv)
             char * initial_request_copy2 = malloc(100);
             char * initial_request_copy3 = malloc(100);
             char * initial_request_copy4 = malloc(100);
-            char * file_chunk1 = malloc(MAXBUF);
-            char * file_chunk2 = malloc(MAXBUF);
-            char * file_chunk3 = malloc(MAXBUF);
-            char * file_chunk4 = malloc(MAXBUF);
+            char * server_res1 = malloc(MAXBUF);
+            char * server_res2 = malloc(MAXBUF);
+            char * server_res3 = malloc(MAXBUF);
+            char * server_res4 = malloc(MAXBUF);
             printf("Enter filename\n");
             memset(filename, "", sizeof(filename));
             scanf("%s", filename);
@@ -283,20 +283,75 @@ int main(int argc, char **argv)
 
             printf("Waiting for server reply...\n");
             //read response from all servers
-            read(server1, file_chunk1, MAXBUF);
+            read(server1, server_res1, MAXBUF);
 
-            if(strcmp(file_chunk1, "bad user") ==0){
+            if(strcmp(server_res1, "bad user") ==0){
                 printf("User could not be authenticated\n");
                 close(server1);
             }
             else{
+                
                 //write back to servers with file chunks
 
+                //convert file to string
+                //hash file
                 char * client_file_string = malloc(MAXBUF);
+                char * client_file_hash = malloc(MAXBUF);
                 client_file_string = file_to_buf(filename);
-                
-                write(server1, client_file_string, strlen(client_file_string));
+                strcpy(client_file_hash, client_file_string);
+                int hashed_file;
+                hashed_file = hash(client_file_hash);
+                hashed_file = hashed_file % 4;
+                if(hashed_file<0){
+                    hashed_file = hashed_file*-1;
+                }
 
+                int filesize = strlen(client_file_string);
+                int chunk1 = filesize/4;
+                int chunk2 = chunk1*2;
+                int chunk3 = chunk1*3;
+                char file_chunk1[MAXBUF];
+                char file_chunk2[MAXBUF];
+                char file_chunk3[MAXBUF];
+                char file_chunk4[MAXBUF];
+
+                //fill file chunks
+                for(int i =0; i < chunk1; i++){
+                    file_chunk1[i]=client_file_string[i];
+                }
+                int j =0;
+                for(int i =chunk1; i < chunk2; i++){
+                    printf("%c\n",client_file_string[i] );
+                    file_chunk2[j]=client_file_string[i];
+                    j++;
+                }
+                j = 0;
+                for(int i =chunk2; i < chunk3; i++){
+                    file_chunk3[j]=client_file_string[i];
+                    j++;
+                }
+                j=0;
+                for(int i =chunk3; i < filesize; i++){
+                    file_chunk4[j]=client_file_string[i];
+                    j++;
+                }
+
+                printf("%s\n",file_chunk1);
+                printf("%s\n",file_chunk2);
+                printf("%s\n",file_chunk3);
+                printf("%s\n",file_chunk4);
+
+
+
+
+
+
+
+                //need to switch hash value
+                printf("value of hashed file\n%d\n", hashed_file);
+
+
+                write(server1, client_file_string, strlen(client_file_string));
                 read(server1,file_chunk1, MAXBUF);
 
                 printf("Server final reply:\n%s\n",file_chunk1);
@@ -508,4 +563,16 @@ int getLine (char *prmpt, char *buff, size_t sz) {
     // Otherwise remove newline and give string back to caller.
     buff[strlen(buff)-1] = '\0';
     return OK;
+}
+
+//https://stackoverflow.com/questions/7666509/hash-function-for-string
+int hash(char *str)
+{
+    int hash = 5381;
+    int c;
+
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
 }

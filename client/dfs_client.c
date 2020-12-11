@@ -105,49 +105,27 @@ int main(int argc, char **argv)
     password = strings[5];
     password[strlen(password)]=0;
 
-    char * user_input = malloc(MAXBUF);
-    while(1){
-        memset(user_input, "", sizeof(user_input));
-        printf("Enter command filename\n");
-        scanf("%[^\n]%*c",user_input);
-
-        
-    }    
     //list commands
-    int q =0;
-    //q<1
-    while(q<1){
+    while(1){
 
-        printf("Select a command to send to server\n");
-        printf("1:list\n");
-        printf("2:get\n");
-        printf("3:put\n");
-        printf("99: exit\n");
-        char user_string[2];
-        int user_selection;
-        //user_string[1] = 0;
-        /*if(scanf("%d", &user_selection) ==0){
-            fflush(stdin);
-            //scanf(" %d", &user_selection);
-        }*/
-        //scanf(" %d", &user_selection);
-        //memset(user_string, "", sizeof(user_string));
-        //fgets(user_string, sizeof(int), stdin);
-        //user_selection = atoi(user_string);
-        char a;
-        //a = getchar();
-        scanf("%d", &user_selection);
-        //a = (int)a;
-        //printf("%d\n",a );
+        char * user_input = malloc(MAXBUF);
+        printf("Enter get <filename> OR put <filename> OR list OR exit\n");
+        scanf("%[^\n]%*c",user_input);
+        printf("%s\n",user_input );
+        char * command = malloc(MAXBUF);
+        char * filename = malloc(MAXBUF);        
+        command = strtok(user_input, " ");
+        command[strlen(command)] = 0;
+        filename = strtok(NULL, " ");
+        
         //exit conditional
-        if(user_selection == 99){
+        if(strcmp(command, "exit") == 0){
             printf("Goodbye!\n");
             return 1;
         }//exit
 
         //handle list
-        else if(user_selection == 1){
-
+        else if(strcmp(command,"list") ==0){
 
             //connect to all servers
             server1 = connect_to_server(server1_address);
@@ -193,14 +171,13 @@ int main(int argc, char **argv)
             close(server3);
             close(server4);
 
-            printf("Client exiting successfully\n");
-            return 1;
+            printf("Listed successfully\n");
 
 
         }//list
 
         //handle get
-        else if(user_selection == 2){
+        else if(strcmp(command,"get")== 0){
 
             //connect to all servers
             server1 = connect_to_server(server1_address);
@@ -208,7 +185,7 @@ int main(int argc, char **argv)
             server3 = connect_to_server(server3_address);
             server4 = connect_to_server(server4_address);
             
-            char filename[MAXBUF];
+            //char filename[MAXBUF];
             char * initial_request = malloc(100);
             char * initial_request_copy1 = malloc(100);
             char * initial_request_copy2 = malloc(100);
@@ -218,9 +195,10 @@ int main(int argc, char **argv)
             char * file_chunk2 = malloc(MAXBUF);
             char * file_chunk3 = malloc(MAXBUF);
             char * file_chunk4 = malloc(MAXBUF);
+            /*
             printf("Enter filename\n");
             memset(filename, "", sizeof(filename));
-            scanf("%s", filename);
+            scanf("%s", filename);*/
             
             //build request to server
             //format of "<username> <password> get <filename>""
@@ -288,13 +266,12 @@ int main(int argc, char **argv)
             file_in_client = fopen(filename, "w");
             fputs(assembled_file, file_in_client);
 
-            printf("Client exiting successfully\n");
-            return 1;           
+            printf("Client got successfully\n");           
 
         }//get
 
         //handle put
-        else if(user_selection == 3){
+        else if(strcmp(command,"put") ==0){
 
             //connect to all servers
             server1 = connect_to_server(server1_address);
@@ -302,7 +279,7 @@ int main(int argc, char **argv)
             server3 = connect_to_server(server3_address);
             server4 = connect_to_server(server4_address);
             
-            char filename[MAXBUF];
+            //char filename[MAXBUF];
             char * initial_request = malloc(100);
             char * initial_request_copy1 = malloc(100);
             char * initial_request_copy2 = malloc(100);
@@ -312,9 +289,9 @@ int main(int argc, char **argv)
             char * server_res2 = malloc(MAXBUF);
             char * server_res3 = malloc(MAXBUF);
             char * server_res4 = malloc(MAXBUF);
-            printf("Enter filename\n");
+            /*printf("Enter filename\n");
             memset(filename, "", sizeof(filename));
-            scanf("%s", filename);
+            scanf("%s", filename);*/
 
             //build request to server
             //format of "<username> <password> put <filename>""
@@ -422,15 +399,12 @@ int main(int argc, char **argv)
             close(server3);
             close(server4);
 
-            printf("Client exiting successfully\n");
-            return 1;          
+            printf("Client put successfully\n");        
 
         }//put
         else{
             printf("Please enter a valid command\n\n");
         }//bad command
-
-        q++;
 
     }//while(1)
     

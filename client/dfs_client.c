@@ -31,6 +31,7 @@ char* get_user(char * conf_string);
 char* get_password(char * conf_string);
 char* concat(int count, ...);
 char * file_to_buf(char * filename);
+char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num);
 
 int main(int argc, char **argv) 
 {
@@ -392,27 +393,54 @@ int main(int argc, char **argv)
                 j++;
             }
 
+            char * combo_chunk1 = malloc(MAXBUF);
+            char * combo_chunk2 = malloc(MAXBUF);
+            char * combo_chunk3 = malloc(MAXBUF);
+            char * combo_chunk4 = malloc(MAXBUF);
             //need to switch hash value
-            
-            char * combo_chunk = malloc(MAXBUF);
-            strcpy(combo_chunk, file_chunk1);
-            strcat(combo_chunk, "\n\n\n\n");
-            strcat(combo_chunk, file_chunk3);
-            strcat(combo_chunk, "\n\n\n\n");
-            printf("%s\n",combo_chunk);
+            switch(hashed_file){
+
+                case 0: 
+                combo_chunk1 = build_combo_chunk(file_chunk1,"1", file_chunk2, "2");
+                combo_chunk2 = build_combo_chunk(file_chunk2,"2", file_chunk3, "3");
+                combo_chunk3 = build_combo_chunk(file_chunk3,"3", file_chunk4, "4");
+                combo_chunk4 = build_combo_chunk(file_chunk4,"4", file_chunk1, "1");
+                break;
+
+                case 1: 
+                combo_chunk1 = build_combo_chunk(file_chunk4,"4", file_chunk1, "1");
+                combo_chunk2 = build_combo_chunk(file_chunk1,"1", file_chunk2, "2");
+                combo_chunk3 = build_combo_chunk(file_chunk2,"2", file_chunk3, "3");
+                combo_chunk4 = build_combo_chunk(file_chunk3,"3", file_chunk4, "4");
+                break;
+
+                case 2:
+                combo_chunk1 = build_combo_chunk(file_chunk3,"3", file_chunk4, "1");
+                combo_chunk2 = build_combo_chunk(file_chunk4,"4", file_chunk1, "1");
+                combo_chunk3 = build_combo_chunk(file_chunk1,"1", file_chunk2, "2");
+                combo_chunk4 = build_combo_chunk(file_chunk2,"2", file_chunk3, "3");
+                break;
+
+                case 3:
+                combo_chunk1 = build_combo_chunk(file_chunk2,"2", file_chunk3, "3");
+                combo_chunk2 = build_combo_chunk(file_chunk3,"3", file_chunk4, "4");
+                combo_chunk3 = build_combo_chunk(file_chunk4,"4", file_chunk1, "1");
+                combo_chunk4 = build_combo_chunk(file_chunk1,"1", file_chunk2, "2");
+
+                default: printf("Bad hash\n");
+                    return -1;
+            }
             
             //write back to servers with file chunks
-            write(server1, combo_chunk, strlen(combo_chunk));
-            write(server2, file_chunk2, strlen(file_chunk2));
-            write(server3, file_chunk3, strlen(file_chunk3));
-            write(server4, file_chunk4, strlen(file_chunk4));
+            write(server1, combo_chunk1, strlen(combo_chunk1));
+            write(server2, combo_chunk2, strlen(combo_chunk2));
+            write(server3, combo_chunk3, strlen(combo_chunk3));
+            write(server4, combo_chunk4, strlen(combo_chunk4));
 
             read(server1,server_res1, MAXBUF);
             read(server2,server_res2, MAXBUF);
             read(server3,server_res3, MAXBUF);
             read(server4,server_res4, MAXBUF);
-
-            write(server1, file_chunk2, strlen(file_chunk2));
 
             close(server1);
             close(server2);
@@ -430,6 +458,21 @@ int main(int argc, char **argv)
     
 }//main 
 
+char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num){
+
+    char * combo_chunk = malloc(MAXBUF);
+    strcpy(combo_chunk, file_chunk1);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk1_num);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk2);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk2_num);
+
+    return combo_chunk;
+
+
+}
 char* concat(int count, ...)
 {
     va_list ap;

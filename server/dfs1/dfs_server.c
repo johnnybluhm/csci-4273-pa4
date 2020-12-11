@@ -34,6 +34,7 @@ char * file_to_buf(char * filename);
 void config_string_to_strings(char * string, char * strings[]);
 void check_dir(char * user);
 int ls(char *ls_contents, char * user);
+int save_chunk(char * file_chunk, char * chunk_num, char * username, char * filename);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
@@ -201,32 +202,31 @@ void * handle_connection(void * vargp)
         printf("%s\n",file_chunk );
         char *chunk1 = malloc(MAXBUF);
         char *chunk2 = malloc(MAXBUF);
+        char *chunk1_num = malloc(MAXBUF);
+        char *chunk2_num = malloc(MAXBUF);
         char *saveptr3 = malloc(MAXBUF);
         chunk1 = strtok_r(file_chunk, "\n\n\n\n", &saveptr3);
+        chunk1_num = strtok_r(NULL, "\n\n\n\n", &saveptr3);
         chunk2 = strtok_r(NULL, "\n\n\n\n", &saveptr3);
+        chunk2_num = strtok_r(NULL, "\n\n\n\n", &saveptr3);
         printf("Chunk1 is\n%s\n",chunk1);
         printf("Chunk2 is\n%s\n",chunk2);
-        //save file to home dir
-        FILE * file_to_save;
-        char * filename_with_num = malloc(MAXBUF);
-        //create file string
-        strcpy(filename_with_num, username);
-        strcat(filename_with_num,"/");
-        strcat(filename_with_num, filename);
-        strcat(filename_with_num,".1");
+        printf("Chunk1 num is\n%s\n",chunk1_num);
+        printf("Chunk2 num is\n%s\n",chunk2_num);
 
-        file_to_save = fopen(filename_with_num, "w");
-        if(file_to_save == NULL){
-            printf("Error writing to file\n");
+        //save chunks to home dir
+        int check_save;
+        check_save = save_chunk(chunk1, chunk1_num, username, filename);
+        if(check_save <0){
+            printf("Error saving chunk\n");
             return NULL;
         }
-        file_chunk[strlen(file_chunk)] = 0;
-        fprintf(file_to_save, "%s", file_chunk);
-        fclose(file_to_save);
-
-        return NULL;
-
-        
+        check_save = save_chunk(chunk2, chunk2_num, username, filename);
+        if(check_save <0){
+            printf("Error saving chunk\n");
+            return NULL;
+        }
+        return NULL;       
 
     }//put
     else if(strcmp("list", request_type)==0){
@@ -253,6 +253,28 @@ HELPER FUNCTIONS BELOW
 
 
 */
+
+int save_chunk(char * file_chunk, char * chunk_num, char * username, char * filename){
+
+    FILE * file_to_save;
+    char * filename_with_num = malloc(MAXBUF);
+    //create file string
+    strcpy(filename_with_num, username);
+    strcat(filename_with_num,"/");
+    strcat(filename_with_num, filename);
+    strcat(filename_with_num, ".");
+    strcat(filename_with_num,chunk_num);
+
+    file_to_save = fopen(filename_with_num, "w");
+    if(file_to_save == NULL){
+        printf("Error writing to file\n");
+        return -1;
+    }
+    file_chunk[strlen(file_chunk)] = 0;
+    fprintf(file_to_save, "%s", file_chunk);
+    fclose(file_to_save);
+    return 1;
+}
 int build_server_addr(struct sockaddr_in* serv_addr, char * ip_add){
     printf("Building address\n");
     serv_addr->sin_family = AF_INET; //ipV4

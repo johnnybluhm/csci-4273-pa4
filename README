@@ -1,0 +1,29 @@
+Things that were not accomlished:
+	cannot handle anything but regular text files
+	cannot handle files greater than MAXBUF of 8192
+	list will not show if file is incomplete
+	realiability exists, but did not have time to actually implement on client side
+	GET will assemble the file based off of one config
+	1 second timeout on client does not exist, if wanted on server uncomment setsockopt options
+
+Notes:
+Username and password are read by user input instead of via file
+Sending an empty file with GET will cause all servers to seg fault
+Use a different hashing than md5
+Hash filename instead of file
+
+Server programs:
+	To build:
+		cd to inside the dfs# directory and type make
+	To run:
+		./dfs_server <port>
+
+Client program:
+	To build:
+		cd to client directory and type make
+	To run:
+		./dfs_client dfc.conf
+
+The dfc.conf uses port numbers 10001-10004
+Username and password are still in file but not used
+There is a test file provided called fast, it shouldn't be in any user's directory so it can be used to verify GET if desired

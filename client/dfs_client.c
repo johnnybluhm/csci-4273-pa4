@@ -157,36 +157,60 @@ int main(int argc, char **argv)
         else if(user_selection == 1){
 
 
-            //connect to servers
+            //connect to all servers
             server1 = connect_to_server(server1_address);
+            server2 = connect_to_server(server2_address);
+            server3 = connect_to_server(server3_address);
+            server4 = connect_to_server(server4_address);
 
             char * initial_request = malloc(100);
             char * initial_request_copy1 = malloc(100);
+            char * initial_request_copy2 = malloc(100);
+            char * initial_request_copy3 = malloc(100);
+            char * initial_request_copy4 = malloc(100);
             char ls1[MAXBUF];
             char ls2[MAXBUF];
             char ls3[MAXBUF];
             char ls4[MAXBUF];
             //will need a copy to send to each server. string seems to be destroyed upon sending
-            initial_request = concat(4, "alic", " password" , " list ", "list_cmd" );
+            initial_request = concat(4, "bob", " another" , " list ", "list_cmd" );
 
             strcpy(initial_request_copy1, initial_request);
+            strcpy(initial_request_copy2, initial_request);
+            strcpy(initial_request_copy3, initial_request);
+            strcpy(initial_request_copy4, initial_request);
 
-            //strcat(initial_request, password);
-            printf("%s\n",initial_request );
-            write(server1, initial_request, strlen(initial_request));
-            //write(server2, initial_request, strlen(initial_request_copy1));
+
+            write(server1, initial_request_copy1, strlen(initial_request_copy1));
+            write(server2, initial_request_copy2, strlen(initial_request_copy2));
+            write(server3, initial_request_copy3, strlen(initial_request_copy3));
+            write(server4, initial_request_copy4, strlen(initial_request_copy4));
+
             read(server1, ls1, MAXBUF);
+            read(server2, ls1, MAXBUF);
+            read(server3, ls1, MAXBUF);
+            read(server4, ls1, MAXBUF);
             //read(server2, ls2, MAXBUF);
             printf("Server 1 directory contents:\n%s\n\n", ls1);
-            //printf("Server 2 directory contents:\n%s\n\n", ls2);
+            printf("Server 2 directory contents:\n%s\n\n", ls2);
+            printf("Server 3 directory contents:\n%s\n\n", ls3);
+            printf("Server 4 directory contents:\n%s\n\n", ls4);
+
+            close(server1);
+            close(server2);
+            close(server3);
+            close(server4);
 
         }
 
         //handle get
         else if(user_selection == 2){
 
-            //connect to servers
+            //connect to all servers
             server1 = connect_to_server(server1_address);
+            server2 = connect_to_server(server2_address);
+            server3 = connect_to_server(server3_address);
+            server4 = connect_to_server(server4_address);
             
             char filename[MAXBUF];
             char * initial_request = malloc(100);
@@ -202,47 +226,68 @@ int main(int argc, char **argv)
             memset(filename, "", sizeof(filename));
             scanf("%s", filename);
             
-            printf("file name is:\n%s\n",filename );
             //build request to server
             //format of "<username> <password> get <filename>""
-            initial_request = concat(4, "alice", " password", " get ",filename );
+            initial_request = concat(4, "bob", " another", " get ",filename );
             strcpy(initial_request_copy1, initial_request);
             strcpy(initial_request_copy2, initial_request);
             strcpy(initial_request_copy3, initial_request);
             strcpy(initial_request_copy4, initial_request);
-           
-            printf("Request is:\n%s\n",initial_request );
 
             //write request to all servers
             write(server1, initial_request_copy1, strlen(initial_request_copy1));
-            //write(server2, initial_request_copy2, strlen(initial_request_copy2));
+            write(server2, initial_request_copy2, strlen(initial_request_copy2));
+            write(server3, initial_request_copy3, strlen(initial_request_copy3));
+            write(server4, initial_request_copy4, strlen(initial_request_copy4));
 
 
-            printf("Requesting from server\n");
-
-
+            printf("Waiting for server reply...\n");
             //read response from all servers
             read(server1, file_chunk1, MAXBUF);
+            read(server2, file_chunk2, MAXBUF);
+            read(server3, file_chunk3, MAXBUF);
+            read(server4, file_chunk4, MAXBUF);
 
             if(strcmp(file_chunk1, "bad user") ==0){
                 printf("User could not be authenticated\n");
                 close(server1);
+                return -1;
             }
-            else{
-                //read(server2, file_chunk2, MAXBUF);
-                close(server1);
+            if(strcmp(file_chunk2, "bad user") ==0){
+                printf("User could not be authenticated\n");
                 close(server2);
-                printf("Server 1 response:\n%s\n", file_chunk1);
-                //printf("Server 2 response:\n%s\n", file_chunk2);
-                
-                //concat file chunks, then put to a file
-                
-                //put file strings into a file
-                //need to store as indivbudal chunks
-                FILE * file_in_client;
-                file_in_client = fopen(filename, "w");
-                fputs(file_chunk1, file_in_client);
-            }//else
+                return -1;
+            }
+            if(strcmp(file_chunk3, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server3);
+                return -1;
+            }
+            if(strcmp(file_chunk4, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server4);
+                return -1;
+            }
+
+
+            //read(server2, file_chunk2, MAXBUF);
+            close(server1);
+            close(server2);
+            close(server3);
+            close(server4);
+            printf("Server 1 response:\n%s\n", file_chunk1);
+            printf("Server 2 response:\n%s\n", file_chunk2);
+            
+            //concat file chunks, then put to a file
+            
+            //put file strings into a file
+            //need to store as indivbudal chunks
+            FILE * file_in_client;
+            file_in_client = fopen(filename, "w");
+            fputs(file_chunk1, file_in_client);
+
+
+
             
 
         }
@@ -250,8 +295,11 @@ int main(int argc, char **argv)
         //handle put
         else if(user_selection == 3){
 
-            //connect to servers
+            //connect to all servers
             server1 = connect_to_server(server1_address);
+            server2 = connect_to_server(server2_address);
+            server3 = connect_to_server(server3_address);
+            server4 = connect_to_server(server4_address);
             
             char filename[MAXBUF];
             char * initial_request = malloc(100);
@@ -279,79 +327,84 @@ int main(int argc, char **argv)
 
             //write request to all servers
             write(server1, initial_request_copy1, strlen(initial_request_copy1));
-            //write(server2, initial_request_copy2, strlen(initial_request_copy2));            
+            write(server2, initial_request_copy2, strlen(initial_request_copy2));
+            write(server3, initial_request_copy3, strlen(initial_request_copy3));
+            write(server4, initial_request_copy4, strlen(initial_request_copy4));        
 
             printf("Waiting for server reply...\n");
             //read response from all servers
             read(server1, server_res1, MAXBUF);
+            read(server2, server_res2, MAXBUF);
+            read(server3, server_res3, MAXBUF);
+            read(server4, server_res4, MAXBUF);
 
             if(strcmp(server_res1, "bad user") ==0){
                 printf("User could not be authenticated\n");
                 close(server1);
             }
-            else{
+
                 
-                //write back to servers with file chunks
+            //write back to servers with file chunks
 
-                //convert file to string
-                //hash file
-                char * client_file_string = malloc(MAXBUF);
-                char * client_file_hash = malloc(MAXBUF);
-                client_file_string = file_to_buf(filename);
-                strcpy(client_file_hash, client_file_string);
-                int hashed_file;
-                hashed_file = hash(client_file_hash);
-                hashed_file = hashed_file % 4;
-                if(hashed_file<0){
-                    hashed_file = hashed_file*-1;
-                }
+            //convert file to string
+            //hash file
+            char * client_file_string = malloc(MAXBUF);
+            char * client_file_hash = malloc(MAXBUF);
+            client_file_string = file_to_buf(filename);
+            strcpy(client_file_hash, client_file_string);
+            int hashed_file;
+            hashed_file = hash(client_file_hash);
+            hashed_file = hashed_file % 4;
+            if(hashed_file<0){
+                hashed_file = hashed_file*-1;
+            }
 
-                int filesize = strlen(client_file_string);
-                int chunk1 = filesize/4;
-                int chunk2 = chunk1*2;
-                int chunk3 = chunk1*3;
-                char file_chunk1[MAXBUF];
-                char file_chunk2[MAXBUF];
-                char file_chunk3[MAXBUF];
-                char file_chunk4[MAXBUF];
+            int filesize = strlen(client_file_string);
+            int chunk1 = filesize/4;
+            int chunk2 = chunk1*2;
+            int chunk3 = chunk1*3;
+            char file_chunk1[MAXBUF];
+            char file_chunk2[MAXBUF];
+            char file_chunk3[MAXBUF];
+            char file_chunk4[MAXBUF];
 
-                //fill file chunks
-                for(int i =0; i < chunk1; i++){
-                    file_chunk1[i]=client_file_string[i];
-                }
-                int j =0;
-                for(int i =chunk1; i < chunk2; i++){
-                    file_chunk2[j]=client_file_string[i];
-                    j++;
-                }
-                j = 0;
-                for(int i =chunk2; i < chunk3; i++){
-                    file_chunk3[j]=client_file_string[i];
-                    j++;
-                }
-                j=0;
-                for(int i =chunk3; i < filesize; i++){
-                    file_chunk4[j]=client_file_string[i];
-                    j++;
-                }
+            //fill file chunks
+            for(int i =0; i < chunk1; i++){
+                file_chunk1[i]=client_file_string[i];
+            }
+            int j =0;
+            for(int i =chunk1; i < chunk2; i++){
+                file_chunk2[j]=client_file_string[i];
+                j++;
+            }
+            j = 0;
+            for(int i =chunk2; i < chunk3; i++){
+                file_chunk3[j]=client_file_string[i];
+                j++;
+            }
+            j=0;
+            for(int i =chunk3; i < filesize; i++){
+                file_chunk4[j]=client_file_string[i];
+                j++;
+            }
 
-                printf("chunk1\n%s\n",file_chunk1);
-                printf("chunk2\n%s\n",file_chunk2);
-                printf("chunk3\n%s\n",file_chunk3);
-                printf("chunk4\n%s\n",file_chunk4);
+            printf("chunk1\n%s\n",file_chunk1);
+            printf("chunk2\n%s\n",file_chunk2);
+            printf("chunk3\n%s\n",file_chunk3);
+            printf("chunk4\n%s\n",file_chunk4);
 
-                //need to switch hash value
-                printf("value of hashed file\n%d\n", hashed_file);
+            //need to switch hash value
+            printf("value of hashed file\n%d\n", hashed_file);
 
 
-                write(server1, file_chunk1, strlen(file_chunk1));
-                read(server1,server_res1, MAXBUF);
+            write(server1, file_chunk1, strlen(file_chunk1));
+            read(server1,server_res1, MAXBUF);
 
-                printf("Server final reply:\n%s\n",server_res1);
+            printf("Server final reply:\n%s\n",server_res1);
 
-                //printf("Server 2 response:\n%s\n", file_chunk2);
+            //printf("Server 2 response:\n%s\n", file_chunk2);
 
-            }//else
+            
 
         }//put
         else{

@@ -114,8 +114,6 @@ void * handle_connection(void * vargp)
     printf("Waiting for client request...\n");
     bytes_read = read(client_socket, entire_request, MAXBUF);
 
-    printf("Request is:\n%s\n",entire_request );
-
     //parse client request
     //comes in form <username> <password> <request_type> <filename>
     char * request_array[4];
@@ -132,6 +130,10 @@ void * handle_connection(void * vargp)
 
     //authenticate user here
     conf_file_string = file_to_buf("dfs.conf");
+    if(strcmp(conf_file_string, "no_file") ==0){
+        printf("Error opening dfs.conf\n");
+        return NULL;
+    }
     username = request_array[0];
     password = request_array[1];
     
@@ -179,9 +181,7 @@ void * handle_connection(void * vargp)
         strcpy(hom_dir_file, username);
         strcat(hom_dir_file,"/");
         strcat(hom_dir_file, filename);
-        printf("%s\n",hom_dir_file );
         file_in_buf = file_to_buf(hom_dir_file);
-        printf("file as string:\n%s\n",file_in_buf );
         write(client_socket, file_in_buf, strlen(file_in_buf));
         close(client_socket);
 
@@ -196,20 +196,29 @@ void * handle_connection(void * vargp)
 
         bytes_read = read(client_socket, file_chunk, MAXBUF);
         put_response = "File received successfully";
-        printf("File chunk:\n%s\n",file_chunk);
+        
         write(client_socket,put_response,strlen(put_response));
+        close(client_socket);
+
+        //save file to home dir
         FILE * file_to_save;
         char * filename_with_num = malloc(MAXBUF);
+        //create file string
         strcpy(filename_with_num, username);
         strcat(filename_with_num,"/");
         strcat(filename_with_num, filename);
         strcat(filename_with_num,".1");
-        printf("%s\n",filename_with_num );
-        file_to_save = fopen(filename_with_num, "w");
+
+        file_to_save = fopen(filename_with_num, "a");
         if(file_to_save == NULL){
             printf("Error writing to file\n");
             return NULL;
         }
+        file_chunk[strlen(file_chunk)] = 0;
+        fprintf(file_to_save, "%s", file_chunk);
+        fclose(file_to_save);
+
+        return NULL;
 
         
 
@@ -217,7 +226,6 @@ void * handle_connection(void * vargp)
     else if(strcmp("list", request_type)==0){
 
         ls(ls_string, username);
-        printf("ls is:\n%s\n",ls_string);
         write(client_socket, ls_string, strlen(ls_string));
         close(client_socket);
 
@@ -424,6 +432,7 @@ char * file_to_buf(char * filename)
     FILE *f = fopen(filename, "r");
     if(f == NULL){
         printf("File not found\n");
+        return "no_file\0";
     }
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);

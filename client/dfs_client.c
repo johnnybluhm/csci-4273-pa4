@@ -97,13 +97,13 @@ int main(int argc, char **argv)
     }    
 
     //get username and password
-    char* username;
-    char* password;
+    char* username = malloc(MAXBUF);
+    char* password = malloc(MAXBUF);
 
-    username = strings[4];
-    username[strlen(username)] = 0;
-    password = strings[5];
-    password[strlen(password)]=0;
+    printf("Enter username\n");
+    scanf("%[^\n]%*c",username);
+    printf("Enter password\n");
+    scanf("%[^\n]%*c",password);
 
     //list commands
     while(1){
@@ -111,13 +111,12 @@ int main(int argc, char **argv)
         char * user_input = malloc(MAXBUF);
         printf("Enter get <filename> OR put <filename> OR list OR exit\n");
         scanf("%[^\n]%*c",user_input);
-        printf("%s\n",user_input );
         char * command = malloc(MAXBUF);
         char * filename = malloc(MAXBUF);        
         command = strtok(user_input, " ");
         command[strlen(command)] = 0;
         filename = strtok(NULL, " ");
-        
+
         //exit conditional
         if(strcmp(command, "exit") == 0){
             printf("Goodbye!\n");
@@ -142,8 +141,10 @@ int main(int argc, char **argv)
             char ls2[MAXBUF];
             char ls3[MAXBUF];
             char ls4[MAXBUF];
+
             //will need a copy to send to each server. string seems to be destroyed upon sending
-            initial_request = concat(4, "bob", " another" , " list ", "list_cmd" );
+            initial_request = concat(5, username," ", password , " list ", "list_cmd" );
+            printf("%s\n",initial_request );
 
             strcpy(initial_request_copy1, initial_request);
             strcpy(initial_request_copy2, initial_request);
@@ -160,7 +161,28 @@ int main(int argc, char **argv)
             read(server2, ls2, MAXBUF);
             read(server3, ls3, MAXBUF);
             read(server4, ls4, MAXBUF);
-            //read(server2, ls2, MAXBUF);
+
+            if(strcmp(ls1, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server1);
+                return -1;
+            }
+            if(strcmp(ls2, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server2);
+                return -1;
+            }
+            if(strcmp(ls3, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server3);
+                return -1;
+            }
+            if(strcmp(ls4, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server4);
+                return -1;
+            }
+
             printf("Server 1 directory contents:\n%s\n\n", ls1);
             printf("Server 2 directory contents:\n%s\n\n", ls2);
             printf("Server 3 directory contents:\n%s\n\n", ls3);
@@ -171,7 +193,7 @@ int main(int argc, char **argv)
             close(server3);
             close(server4);
 
-            printf("Listed successfully\n");
+            printf("Listed successfully\n\n");
 
 
         }//list
@@ -185,7 +207,6 @@ int main(int argc, char **argv)
             server3 = connect_to_server(server3_address);
             server4 = connect_to_server(server4_address);
             
-            //char filename[MAXBUF];
             char * initial_request = malloc(100);
             char * initial_request_copy1 = malloc(100);
             char * initial_request_copy2 = malloc(100);
@@ -195,14 +216,10 @@ int main(int argc, char **argv)
             char * file_chunk2 = malloc(MAXBUF);
             char * file_chunk3 = malloc(MAXBUF);
             char * file_chunk4 = malloc(MAXBUF);
-            /*
-            printf("Enter filename\n");
-            memset(filename, "", sizeof(filename));
-            scanf("%s", filename);*/
             
             //build request to server
             //format of "<username> <password> get <filename>""
-            initial_request = concat(4, "bob", " another", " get ",filename );
+            initial_request = concat(5, username," ", password , " get ", filename);
             strcpy(initial_request_copy1, initial_request);
             strcpy(initial_request_copy2, initial_request);
             strcpy(initial_request_copy3, initial_request);
@@ -243,8 +260,6 @@ int main(int argc, char **argv)
                 return -1;
             }
 
-
-            //read(server2, file_chunk2, MAXBUF);
             close(server1);
             close(server2);
             close(server3);
@@ -266,7 +281,7 @@ int main(int argc, char **argv)
             file_in_client = fopen(filename, "w");
             fputs(assembled_file, file_in_client);
 
-            printf("Client got successfully\n");           
+            printf("Client got successfully\n\n");           
 
         }//get
 
@@ -295,7 +310,7 @@ int main(int argc, char **argv)
 
             //build request to server
             //format of "<username> <password> put <filename>""
-            initial_request = concat(4, "bob", " another", " put ",filename );
+            initial_request = concat(5, username," ", password , " get ", filename);
             strcpy(initial_request_copy1, initial_request);
             strcpy(initial_request_copy2, initial_request);
             strcpy(initial_request_copy3, initial_request);
@@ -399,7 +414,7 @@ int main(int argc, char **argv)
             close(server3);
             close(server4);
 
-            printf("Client put successfully\n");        
+            printf("Client put successfully\n\n");        
 
         }//put
         else{

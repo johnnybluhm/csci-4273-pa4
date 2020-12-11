@@ -99,39 +99,38 @@ void * handle_connection(void * vargp)
     char * ls_string = malloc(MAXBUF);
     char * file_in_buf = malloc(MAXBUF);
     char * conf_file_string = malloc(MAXBUF);
-    int msgsize = 0;
     pthread_detach(pthread_self());     
-    
 
     int bytes_read;
-    char * response = "server 1 got it";
 
-    
-    /*while((bytes_read = read(client_socket, entire_request +msgsize, sizeof(entire_request)-msgsize-1)) > 0 ){
-        msgsize += bytes_read;
-
-    }*/
     printf("Waiting for client request...\n");
     bytes_read = read(client_socket, entire_request, MAXBUF);
-
+    if(bytes_read < 0){
+        printf("Error receiving request\n");
+        return NULL;
+    }
     //parse client request
     //comes in form <username> <password> <request_type> <filename>
     char * request_array[4];
     int i;
     i=1;
     char * saveptr = malloc(MAXBUF);
-    char * token = malloc(50);
+    char * token = malloc(MAXBUF);
     token = strtok_r(entire_request, " ", &saveptr);
     request_array[0] = token;
     while((token = strtok_r(NULL, " ", &saveptr)) != NULL){
         request_array[i] = token;
         i++;
     }
-
     //authenticate user here
     conf_file_string = file_to_buf("dfs.conf");
     if(strcmp(conf_file_string, "no_file") ==0){
         printf("Error opening dfs.conf\n");
+        char * response = malloc(MAXBUF);
+        response = "bad user";
+        write(client_socket, response, strlen(response));
+        close(client_socket);
+
         return NULL;
     }
     username = request_array[0];
@@ -176,7 +175,6 @@ void * handle_connection(void * vargp)
     //get
     if(strcmp("get", request_type)==0){
         printf("In get\n");
-        FILE * client_file;
         char * hom_dir_file = malloc(MAXBUF);
         strcpy(hom_dir_file, username);
         strcat(hom_dir_file,"/");
@@ -208,7 +206,7 @@ void * handle_connection(void * vargp)
         strcpy(filename_with_num, username);
         strcat(filename_with_num,"/");
         strcat(filename_with_num, filename);
-        strcat(filename_with_num,".4");
+        strcat(filename_with_num,".1");
 
         file_to_save = fopen(filename_with_num, "a");
         if(file_to_save == NULL){

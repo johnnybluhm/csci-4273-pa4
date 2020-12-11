@@ -34,6 +34,8 @@ char * file_to_buf(char * filename);
 void config_string_to_strings(char * string, char * strings[]);
 void check_dir(char * user);
 int ls(char *ls_contents, char * user);
+int save_chunk(char * file_chunk, char * chunk_num, char * username, char * filename);
+char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
@@ -143,7 +145,7 @@ void * handle_connection(void * vargp)
     char * saveptr2 = malloc(MAXBUF);
     char *compare_user = malloc(MAXBUF);
     char * compare_password = malloc(MAXBUF);
-    //printf("SEF\n");
+
     //compare username and password to users and paswords in conf file
     for(int i =0; i< sizeof(user_password_array)/sizeof(user_password_array[0]); i++){
         if(user_password_array[i] == NULL){
@@ -176,12 +178,63 @@ void * handle_connection(void * vargp)
     if(strcmp("get", request_type)==0){
         printf("In get\n");
         char * hom_dir_file = malloc(MAXBUF);
+        char * client_file_hash = malloc(MAXBUF);
+        char * file_chunk1 =malloc(MAXBUF);
+        char * file_chunk1_num =malloc(MAXBUF);
+        char * file_chunk2 =malloc(MAXBUF);
+        char * file_chunk2_num =malloc(MAXBUF);
+        char * combo_chunk = malloc(MAXBUF);
+        strcpy(client_file_hash, filename);
+        int hashed_file;
+        hashed_file = hash(client_file_hash);
+        hashed_file = hashed_file % 4;
+        if(hashed_file<0){
+            hashed_file = hashed_file*-1;
+        }
+        switch(hashed_file){
+
+                case 0: 
+                file_chunk1_num = "4";
+                file_chunk2_num = "1";
+                break;
+
+                case 1: 
+                file_chunk1_num = "3";
+                file_chunk2_num = "4";
+                break;
+
+                case 2:
+                file_chunk1_num = "2";
+                file_chunk2_num = "3";
+                break;
+
+                case 3:
+                file_chunk1_num = "1";
+                file_chunk2_num = "2";
+                break;
+
+                default: printf("Bad hash\n");
+                    return -1;
+            }
+
         strcpy(hom_dir_file, username);
         strcat(hom_dir_file,"/");
         strcat(hom_dir_file, filename);
-        strcat(hom_dir_file, ".4");
-        file_in_buf = file_to_buf(hom_dir_file);
-        write(client_socket, file_in_buf, strlen(file_in_buf));
+        strcat(hom_dir_file, ".");
+
+        char * hom_dir_file1 = malloc(MAXBUF);
+        char * hom_dir_file2 = malloc(MAXBUF);
+        strcpy(hom_dir_file1, hom_dir_file);
+        strcpy(hom_dir_file2, hom_dir_file);
+
+        strcat(hom_dir_file1, file_chunk1_num);
+        strcat(hom_dir_file2, file_chunk2_num);
+        file_chunk1 = file_to_buf(hom_dir_file1);
+        file_chunk2 = file_to_buf(hom_dir_file2);
+
+        combo_chunk =build_combo_chunk(file_chunk1, file_chunk1_num, file_chunk2, file_chunk2_num);
+        printf("%s\n",combo_chunk );
+        write(client_socket, combo_chunk, strlen(combo_chunk));
         close(client_socket);
 
     }//get
@@ -198,28 +251,30 @@ void * handle_connection(void * vargp)
         
         write(client_socket,put_response,strlen(put_response));
         close(client_socket);
+        printf("%s\n",file_chunk );
+        char *chunk1 = malloc(MAXBUF);
+        char *chunk2 = malloc(MAXBUF);
+        char *chunk1_num = malloc(MAXBUF);
+        char *chunk2_num = malloc(MAXBUF);
+        char *saveptr3 = malloc(MAXBUF);
+        chunk1 = strtok_r(file_chunk, "\n\n\n\n", &saveptr3);
+        chunk1_num = strtok_r(NULL, "\n\n\n\n", &saveptr3);
+        chunk2 = strtok_r(NULL, "\n\n\n\n", &saveptr3);
+        chunk2_num = strtok_r(NULL, "\n\n\n\n", &saveptr3);
 
-        //save file to home dir
-        FILE * file_to_save;
-        char * filename_with_num = malloc(MAXBUF);
-        //create file string
-        strcpy(filename_with_num, username);
-        strcat(filename_with_num,"/");
-        strcat(filename_with_num, filename);
-        strcat(filename_with_num,".1");
-
-        file_to_save = fopen(filename_with_num, "a");
-        if(file_to_save == NULL){
-            printf("Error writing to file\n");
+        //save chunks to home dir
+        int check_save;
+        check_save = save_chunk(chunk1, chunk1_num, username, filename);
+        if(check_save <0){
+            printf("Error saving chunk\n");
             return NULL;
         }
-        file_chunk[strlen(file_chunk)] = 0;
-        fprintf(file_to_save, "%s", file_chunk);
-        fclose(file_to_save);
-
-        return NULL;
-
-        
+        check_save = save_chunk(chunk2, chunk2_num, username, filename);
+        if(check_save <0){
+            printf("Error saving chunk\n");
+            return NULL;
+        }
+        return NULL;       
 
     }//put
     else if(strcmp("list", request_type)==0){
@@ -246,6 +301,41 @@ HELPER FUNCTIONS BELOW
 
 
 */
+char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num){
+
+    char * combo_chunk = malloc(MAXBUF);
+    strcpy(combo_chunk, file_chunk1);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk1_num);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk2);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk2_num);
+
+    return combo_chunk;
+}
+
+int save_chunk(char * file_chunk, char * chunk_num, char * username, char * filename){
+
+    FILE * file_to_save;
+    char * filename_with_num = malloc(MAXBUF);
+    //create file string
+    strcpy(filename_with_num, username);
+    strcat(filename_with_num,"/");
+    strcat(filename_with_num, filename);
+    strcat(filename_with_num, ".");
+    strcat(filename_with_num,chunk_num);
+
+    file_to_save = fopen(filename_with_num, "w");
+    if(file_to_save == NULL){
+        printf("Error writing to file\n");
+        return -1;
+    }
+    file_chunk[strlen(file_chunk)] = 0;
+    fprintf(file_to_save, "%s", file_chunk);
+    fclose(file_to_save);
+    return 1;
+}
 int build_server_addr(struct sockaddr_in* serv_addr, char * ip_add){
     printf("Building address\n");
     serv_addr->sin_family = AF_INET; //ipV4

@@ -35,6 +35,7 @@ void config_string_to_strings(char * string, char * strings[]);
 void check_dir(char * user);
 int ls(char *ls_contents, char * user);
 int save_chunk(char * file_chunk, char * chunk_num, char * username, char * filename);
+char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num);
 
 struct Thread_object{
     pthread_mutex_t* file_lock;
@@ -144,7 +145,7 @@ void * handle_connection(void * vargp)
     char * saveptr2 = malloc(MAXBUF);
     char *compare_user = malloc(MAXBUF);
     char * compare_password = malloc(MAXBUF);
-    //printf("SEF\n");
+
     //compare username and password to users and paswords in conf file
     for(int i =0; i< sizeof(user_password_array)/sizeof(user_password_array[0]); i++){
         if(user_password_array[i] == NULL){
@@ -177,12 +178,63 @@ void * handle_connection(void * vargp)
     if(strcmp("get", request_type)==0){
         printf("In get\n");
         char * hom_dir_file = malloc(MAXBUF);
+        char * client_file_hash = malloc(MAXBUF);
+        char * file_chunk1 =malloc(MAXBUF);
+        char * file_chunk1_num =malloc(MAXBUF);
+        char * file_chunk2 =malloc(MAXBUF);
+        char * file_chunk2_num =malloc(MAXBUF);
+        char * combo_chunk = malloc(MAXBUF);
+        strcpy(client_file_hash, filename);
+        int hashed_file;
+        hashed_file = hash(client_file_hash);
+        hashed_file = hashed_file % 4;
+        if(hashed_file<0){
+            hashed_file = hashed_file*-1;
+        }
+        switch(hashed_file){
+
+                case 0: 
+                file_chunk1_num = "1";
+                file_chunk2_num = "2";
+                break;
+
+                case 1: 
+                file_chunk1_num = "4";
+                file_chunk2_num = "1";
+                break;
+
+                case 2:
+                file_chunk1_num = "3";
+                file_chunk2_num = "1";
+                break;
+
+                case 3:
+                file_chunk1_num = "2";
+                file_chunk2_num = "3";
+                break;
+
+                default: printf("Bad hash\n");
+                    return -1;
+            }
+
         strcpy(hom_dir_file, username);
         strcat(hom_dir_file,"/");
         strcat(hom_dir_file, filename);
-        strcat(hom_dir_file, ".1");
-        file_in_buf = file_to_buf(hom_dir_file);
-        write(client_socket, file_in_buf, strlen(file_in_buf));
+        strcat(hom_dir_file, ".");
+
+        char * hom_dir_file1 = malloc(MAXBUF);
+        char * hom_dir_file2 = malloc(MAXBUF);
+        strcpy(hom_dir_file1, hom_dir_file);
+        strcpy(hom_dir_file2, hom_dir_file);
+
+        strcat(hom_dir_file1, file_chunk1_num);
+        strcat(hom_dir_file2, file_chunk2_num);
+        file_chunk1 = file_to_buf(hom_dir_file1);
+        file_chunk2 = file_to_buf(hom_dir_file2);
+
+        combo_chunk =build_combo_chunk(file_chunk1, file_chunk1_num, file_chunk2, file_chunk2_num);
+        printf("%s\n",combo_chunk );
+        write(client_socket, combo_chunk, strlen(combo_chunk));
         close(client_socket);
 
     }//get
@@ -209,10 +261,6 @@ void * handle_connection(void * vargp)
         chunk1_num = strtok_r(NULL, "\n\n\n\n", &saveptr3);
         chunk2 = strtok_r(NULL, "\n\n\n\n", &saveptr3);
         chunk2_num = strtok_r(NULL, "\n\n\n\n", &saveptr3);
-        printf("Chunk1 is\n%s\n",chunk1);
-        printf("Chunk2 is\n%s\n",chunk2);
-        printf("Chunk1 num is\n%s\n",chunk1_num);
-        printf("Chunk2 num is\n%s\n",chunk2_num);
 
         //save chunks to home dir
         int check_save;
@@ -253,6 +301,19 @@ HELPER FUNCTIONS BELOW
 
 
 */
+char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num){
+
+    char * combo_chunk = malloc(MAXBUF);
+    strcpy(combo_chunk, file_chunk1);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk1_num);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk2);
+    strcat(combo_chunk, "\n\n\n\n");
+    strcat(combo_chunk, file_chunk2_num);
+
+    return combo_chunk;
+}
 
 int save_chunk(char * file_chunk, char * chunk_num, char * username, char * filename){
 
@@ -460,7 +521,7 @@ char * file_to_buf(char * filename)
     FILE *f = fopen(filename, "r");
     if(f == NULL){
         printf("File not found\n");
-        return "no_file\0";
+        return "no_file";
     }
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);

@@ -32,6 +32,7 @@ char* get_password(char * conf_string);
 char* concat(int count, ...);
 char * file_to_buf(char * filename);
 char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num);
+void parse_combo_chunk(char * combo_chunk, char * strings[]);
 
 int main(int argc, char **argv) 
 {
@@ -265,9 +266,20 @@ int main(int argc, char **argv)
             close(server2);
             close(server3);
             close(server4);
+
+            char * parse_chunk1[4];
+            char * parse_chunk2[4];
+            char * parse_chunk3[4];
+            char * parse_chunk4[4];
+
+            parse_combo_chunk(file_chunk1, parse_chunk1);
+            parse_combo_chunk(file_chunk2, parse_chunk2);
+            parse_combo_chunk(file_chunk3, parse_chunk3);
+            parse_combo_chunk(file_chunk4, parse_chunk4);
+
             printf("Server 1 response:\n%s\n", file_chunk1);
             printf("Server 2 response:\n%s\n", file_chunk2);
-            
+            printf("%s\n",parse_chunk1[0]);
             //concat file chunks, then put to a file
             
             //put file strings into a file
@@ -356,7 +368,8 @@ int main(int argc, char **argv)
             char * client_file_string = malloc(MAXBUF);
             char * client_file_hash = malloc(MAXBUF);
             client_file_string = file_to_buf(filename);
-            strcpy(client_file_hash, client_file_string);
+            strcpy(client_file_hash, filename);
+
             int hashed_file;
             hashed_file = hash(client_file_hash);
             hashed_file = hashed_file % 4;
@@ -397,7 +410,7 @@ int main(int argc, char **argv)
             char * combo_chunk2 = malloc(MAXBUF);
             char * combo_chunk3 = malloc(MAXBUF);
             char * combo_chunk4 = malloc(MAXBUF);
-            //need to switch hash value
+
             switch(hashed_file){
 
                 case 0: 
@@ -458,6 +471,23 @@ int main(int argc, char **argv)
     
 }//main 
 
+void parse_combo_chunk(char * combo_chunk, char * strings[]){
+
+    char *chunk1 = malloc(MAXBUF);
+    char *chunk2 = malloc(MAXBUF);
+    char *chunk1_num = malloc(MAXBUF);
+    char *chunk2_num = malloc(MAXBUF);
+    chunk1 = strtok(combo_chunk, "\n\n\n\n");
+    chunk1_num = strtok(NULL, "\n\n\n\n");
+    chunk2 = strtok(NULL, "\n\n\n\n");
+    chunk2_num = strtok(NULL, "\n\n\n\n");
+
+    strings[0] = chunk1;
+    strings[1] = chunk1_num;
+    strings[2] = chunk2;
+    strings[3] = chunk2_num;
+}
+
 char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num){
 
     char * combo_chunk = malloc(MAXBUF);
@@ -470,8 +500,6 @@ char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file
     strcat(combo_chunk, file_chunk2_num);
 
     return combo_chunk;
-
-
 }
 char* concat(int count, ...)
 {

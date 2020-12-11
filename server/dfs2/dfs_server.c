@@ -181,6 +181,7 @@ void * handle_connection(void * vargp)
         strcpy(hom_dir_file, username);
         strcat(hom_dir_file,"/");
         strcat(hom_dir_file, filename);
+        strcat(hom_dir_file, ".2");
         file_in_buf = file_to_buf(hom_dir_file);
         write(client_socket, file_in_buf, strlen(file_in_buf));
         close(client_socket);

@@ -180,6 +180,7 @@ void * handle_connection(void * vargp)
         char * hom_dir_file = malloc(MAXBUF);
         strcpy(hom_dir_file, username);
         strcat(hom_dir_file,"/");
+        strcat(hom_dir_file, ".3");
         strcat(hom_dir_file, filename);
         file_in_buf = file_to_buf(hom_dir_file);
         write(client_socket, file_in_buf, strlen(file_in_buf));

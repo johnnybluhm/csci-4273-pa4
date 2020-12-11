@@ -104,23 +104,15 @@ int main(int argc, char **argv)
     username[strlen(username)] = 0;
     password = strings[5];
     password[strlen(password)]=0;
-    /*==username = strtok(config_array[4], " ");
-    username = strtok(NULL, " ");
-    //username = get_user(config_array[4]);
-    //password = get_user(config_array[5]);
-    password = strtok(config_array[5], " ");
-    password = strtok(NULL, " ");
-    username[strlen(username)] = '\0';
-    password[strlen(password)] = '\0';*/
 
-    //connect to all servers
-    //server1 = connect_to_server(server1_address);
-    /*server2 = connect_to_server(server2_address);
-    server3 = connect_to_server(server3_address);
-    server4 = connect_to_server(server4_address);*/
+    char * user_input = malloc(MAXBUF);
+    while(1){
+        memset(user_input, "", sizeof(user_input));
+        printf("Enter command filename\n");
+        scanf("%[^\n]%*c",user_input);
 
-    //connected from this point
-    
+        
+    }    
     //list commands
     int q =0;
     //q<1
@@ -187,9 +179,9 @@ int main(int argc, char **argv)
             write(server4, initial_request_copy4, strlen(initial_request_copy4));
 
             read(server1, ls1, MAXBUF);
-            read(server2, ls1, MAXBUF);
-            read(server3, ls1, MAXBUF);
-            read(server4, ls1, MAXBUF);
+            read(server2, ls2, MAXBUF);
+            read(server3, ls3, MAXBUF);
+            read(server4, ls4, MAXBUF);
             //read(server2, ls2, MAXBUF);
             printf("Server 1 directory contents:\n%s\n\n", ls1);
             printf("Server 2 directory contents:\n%s\n\n", ls2);
@@ -286,13 +278,18 @@ int main(int argc, char **argv)
             
             //put file strings into a file
             //need to store as indivbudal chunks
+            char * assembled_file = malloc(MAXBUF);
+            strcpy(assembled_file, file_chunk1);
+            strcat(assembled_file, file_chunk2);
+            strcat(assembled_file, file_chunk3);
+            strcat(assembled_file, file_chunk4);
+            printf("Assembled file:\n%s\n",assembled_file);
             FILE * file_in_client;
             file_in_client = fopen(filename, "w");
-            fputs(file_chunk1, file_in_client);
+            fputs(assembled_file, file_in_client);
 
-
-
-            
+            printf("Client exiting successfully\n");
+            return 1;           
 
         }//get
 
@@ -321,7 +318,7 @@ int main(int argc, char **argv)
 
             //build request to server
             //format of "<username> <password> put <filename>""
-            initial_request = concat(4, "alice", " password", " put ",filename );
+            initial_request = concat(4, "bob", " another", " put ",filename );
             strcpy(initial_request_copy1, initial_request);
             strcpy(initial_request_copy2, initial_request);
             strcpy(initial_request_copy3, initial_request);
@@ -408,19 +405,13 @@ int main(int argc, char **argv)
                 j++;
             }
 
-            printf("chunk1\n%s\n",file_chunk1);
-            printf("chunk2\n%s\n",file_chunk2);
-            printf("chunk3\n%s\n",file_chunk3);
-            printf("chunk4\n%s\n",file_chunk4);
-
             //need to switch hash value
-            printf("value of hashed file\n%d\n", hashed_file);
-
 
             write(server1, file_chunk1, strlen(file_chunk1));
             write(server2, file_chunk2, strlen(file_chunk2));
             write(server3, file_chunk3, strlen(file_chunk3));
             write(server4, file_chunk4, strlen(file_chunk4));
+
             read(server1,server_res1, MAXBUF);
             read(server2,server_res2, MAXBUF);
             read(server3,server_res3, MAXBUF);
@@ -432,9 +423,7 @@ int main(int argc, char **argv)
             close(server4);
 
             printf("Client exiting successfully\n");
-            return 1;
-
-            
+            return 1;          
 
         }//put
         else{

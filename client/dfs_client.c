@@ -277,18 +277,55 @@ int main(int argc, char **argv)
             parse_combo_chunk(file_chunk3, parse_chunk3);
             parse_combo_chunk(file_chunk4, parse_chunk4);
 
-            printf("Server 1 response:\n%s\n", file_chunk1);
-            printf("Server 2 response:\n%s\n", file_chunk2);
-            printf("%s\n",parse_chunk1[0]);
+            char * client_file_hash = malloc(MAXBUF);
+            int hashed_file;
+            strcpy(client_file_hash, filename);
+            hashed_file = hash(client_file_hash);
+            hashed_file = hashed_file % 4;
+            if(hashed_file<0){
+                hashed_file = hashed_file*-1;
+            }
+
+            char * assembled_file = malloc(MAXBUF);
             //concat file chunks, then put to a file
+            switch(hashed_file){
+
+                case 0:
+                    strcpy(assembled_file, parse_chunk1[0]);
+                    strcat(assembled_file, parse_chunk1[2]);
+                    strcat(assembled_file, parse_chunk2[2]);
+                    strcat(assembled_file, parse_chunk3[2]);
+                    break;               
+
+                case 1: 
+                    strcpy(assembled_file, parse_chunk1[2]);
+                    strcat(assembled_file, parse_chunk2[2]);
+                    strcat(assembled_file, parse_chunk3[2]);
+                    strcat(assembled_file, parse_chunk4[2]);
+                    break;                
+
+                case 2:
+                    strcpy(assembled_file, parse_chunk2[2]);
+                    strcat(assembled_file, parse_chunk3[2]);
+                    strcat(assembled_file, parse_chunk4[2]);
+                    strcat(assembled_file, parse_chunk1[2]);
+                    break;                
+
+                case 3:
+                    strcpy(assembled_file, parse_chunk4[0]);
+                    strcat(assembled_file, parse_chunk1[0]);
+                    strcat(assembled_file, parse_chunk1[2]);
+                    strcat(assembled_file, parse_chunk2[2]);
+                    break;
+
+                default: 
+                    printf("Bad hash\n");
+                    return -1;
+            }
             
             //put file strings into a file
             //need to store as indivbudal chunks
-            char * assembled_file = malloc(MAXBUF);
-            strcpy(assembled_file, file_chunk1);
-            strcat(assembled_file, file_chunk2);
-            strcat(assembled_file, file_chunk3);
-            strcat(assembled_file, file_chunk4);
+
             printf("Assembled file:\n%s\n",assembled_file);
             FILE * file_in_client;
             file_in_client = fopen(filename, "w");
@@ -473,19 +510,35 @@ int main(int argc, char **argv)
 
 void parse_combo_chunk(char * combo_chunk, char * strings[]){
 
-    char *chunk1 = malloc(MAXBUF);
-    char *chunk2 = malloc(MAXBUF);
-    char *chunk1_num = malloc(MAXBUF);
-    char *chunk2_num = malloc(MAXBUF);
-    chunk1 = strtok(combo_chunk, "\n\n\n\n");
-    chunk1_num = strtok(NULL, "\n\n\n\n");
-    chunk2 = strtok(NULL, "\n\n\n\n");
-    chunk2_num = strtok(NULL, "\n\n\n\n");
+    if(strcmp("no_file", combo_chunk)==0){
+    strings[0] = NULL;
+    strings[1] = NULL;
+    strings[2] = NULL;
+    strings[3] = NULL;
 
-    strings[0] = chunk1;
-    strings[1] = chunk1_num;
-    strings[2] = chunk2;
-    strings[3] = chunk2_num;
+    }
+    else if(combo_chunk == NULL){
+    strings[0] = NULL;
+    strings[1] = NULL;
+    strings[2] = NULL;
+    strings[3] = NULL;
+    }
+    else{
+
+        char *chunk1 = malloc(MAXBUF);
+        char *chunk2 = malloc(MAXBUF);
+        char *chunk1_num = malloc(MAXBUF);
+        char *chunk2_num = malloc(MAXBUF);
+        chunk1 = strtok(combo_chunk, "\n\n\n\n");
+        chunk1_num = strtok(NULL, "\n\n\n\n");
+        chunk2 = strtok(NULL, "\n\n\n\n");
+        chunk2_num = strtok(NULL, "\n\n\n\n");
+
+        strings[0] = chunk1;
+        strings[1] = chunk1_num;
+        strings[2] = chunk2;
+        strings[3] = chunk2_num;
+    }//else
 }
 
 char * build_combo_chunk(char * file_chunk1, char * file_chunk1_num, char * file_chunk2, char * file_chunk2_num){

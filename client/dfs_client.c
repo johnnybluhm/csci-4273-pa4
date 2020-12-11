@@ -201,7 +201,11 @@ int main(int argc, char **argv)
             close(server3);
             close(server4);
 
-        }
+            printf("Client exiting successfully\n");
+            return 1;
+
+
+        }//list
 
         //handle get
         else if(user_selection == 2){
@@ -290,7 +294,7 @@ int main(int argc, char **argv)
 
             
 
-        }
+        }//get
 
         //handle put
         else if(user_selection == 3){
@@ -341,6 +345,22 @@ int main(int argc, char **argv)
             if(strcmp(server_res1, "bad user") ==0){
                 printf("User could not be authenticated\n");
                 close(server1);
+                return -1;
+            }
+            if(strcmp(server_res2, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server2);
+                return -1;
+            }
+            if(strcmp(server_res3, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server3);
+                return -1;
+            }
+            if(strcmp(server_res4, "bad user") ==0){
+                printf("User could not be authenticated\n");
+                close(server4);
+                return -1;
             }
 
                 
@@ -398,11 +418,21 @@ int main(int argc, char **argv)
 
 
             write(server1, file_chunk1, strlen(file_chunk1));
+            write(server2, file_chunk2, strlen(file_chunk2));
+            write(server3, file_chunk3, strlen(file_chunk3));
+            write(server4, file_chunk4, strlen(file_chunk4));
             read(server1,server_res1, MAXBUF);
+            read(server2,server_res2, MAXBUF);
+            read(server3,server_res3, MAXBUF);
+            read(server4,server_res4, MAXBUF);
 
-            printf("Server final reply:\n%s\n",server_res1);
+            close(server1);
+            close(server2);
+            close(server3);
+            close(server4);
 
-            //printf("Server 2 response:\n%s\n", file_chunk2);
+            printf("Client exiting successfully\n");
+            return 1;
 
             
 

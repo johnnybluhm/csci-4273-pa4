@@ -321,7 +321,6 @@ int main(int argc, char **argv)
                 }
                 int j =0;
                 for(int i =chunk1; i < chunk2; i++){
-                    printf("%c\n",client_file_string[i] );
                     file_chunk2[j]=client_file_string[i];
                     j++;
                 }
@@ -336,25 +335,19 @@ int main(int argc, char **argv)
                     j++;
                 }
 
-                printf("%s\n",file_chunk1);
-                printf("%s\n",file_chunk2);
-                printf("%s\n",file_chunk3);
-                printf("%s\n",file_chunk4);
-
-
-
-
-
-
+                printf("chunk1\n%s\n",file_chunk1);
+                printf("chunk2\n%s\n",file_chunk2);
+                printf("chunk3\n%s\n",file_chunk3);
+                printf("chunk4\n%s\n",file_chunk4);
 
                 //need to switch hash value
                 printf("value of hashed file\n%d\n", hashed_file);
 
 
-                write(server1, client_file_string, strlen(client_file_string));
-                read(server1,file_chunk1, MAXBUF);
+                write(server1, file_chunk1, strlen(file_chunk1));
+                read(server1,server_res1, MAXBUF);
 
-                printf("Server final reply:\n%s\n",file_chunk1);
+                printf("Server final reply:\n%s\n",server_res1);
 
                 //printf("Server 2 response:\n%s\n", file_chunk2);
 
